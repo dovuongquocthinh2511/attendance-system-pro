@@ -13,6 +13,12 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://bestmix_user:bestmix_pass@db/bestmix_auth_db")
 
+    # Odoo Config
+    ODOO_URL: str = os.getenv("ODOO_URL", "https://odoo.bestmix.vn")
+    ODOO_DB: str = os.getenv("ODOO_DB", "bestmix_db")
+    ODOO_USERNAME: str = os.getenv("ODOO_USERNAME", "admin")
+    ODOO_PASSWORD: str = os.getenv("ODOO_PASSWORD", "admin")
+
     class Config:
         case_sensitive = True
         env_file = ".env"

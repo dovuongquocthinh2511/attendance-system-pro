@@ -25,3 +25,6 @@ summary-structure.md
 # Ignore docker files
 docker-compose.yml
 Dockerfile
+
+# Ignore hypothesis files
+.hypothesis

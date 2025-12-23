@@ -3,6 +3,7 @@
 ## Phase 1: Backend Foundation
 
 - [ ] 1. Set up FastAPI project structure
+
   - [ ] 1.1 Initialize FastAPI project with Poetry/pip
     - Create project directory structure: `app/`, `app/api/`, `app/services/`, `app/models/`, `app/core/`
     - Set up `pyproject.toml` or `requirements.txt` with dependencies: fastapi, uvicorn, sqlalchemy, pydantic, python-jose, passlib, bcrypt, hypothesis
@@ -20,18 +21,19 @@
     - _Requirements: 6.1, 6.2_
 
 - [ ] 2. Implement Authentication Service
+
   - [ ] 2.1 Create JWT utilities
     - Implement `create_access_token()` and `verify_token()` in `app/core/security.py`
     - Token payload: sub (user_id), role, odoo_employee_id, exp
     - _Requirements: 1.1, 1.6_
-  - [ ]* 2.2 Write property test for JWT token role
+  - [ ]\* 2.2 Write property test for JWT token role
     - **Property 1: JWT Token Contains Correct Role**
     - **Validates: Requirements 1.1, 1.6**
   - [ ] 2.3 Implement password hashing utilities
     - Use bcrypt for hashing in `app/core/security.py`
     - Implement `hash_password()` and `verify_password()`
     - _Requirements: 6.5_
-  - [ ]* 2.4 Write property test for password hashing
+  - [ ]\* 2.4 Write property test for password hashing
     - **Property 13: Password Hashing**
     - **Validates: Requirements 6.5**
   - [ ] 2.5 Create auth endpoints
@@ -39,7 +41,7 @@
     - `POST /auth/logout` - Invalidate token (add to blacklist)
     - `POST /auth/refresh` - Refresh JWT token
     - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5_
-  - [ ]* 2.6 Write property test for invalid credentials
+  - [ ]\* 2.6 Write property test for invalid credentials
     - **Property 2: Invalid Credentials Rejection**
     - **Validates: Requirements 1.2**
 
@@ -49,6 +51,7 @@
 ## Phase 2: Odoo Integration
 
 - [ ] 4. Implement Odoo Proxy Service
+
   - [ ] 4.1 Create XML-RPC client wrapper
     - Implement `OdooClient` class in `app/services/odoo_client.py`
     - Methods: `authenticate()`, `execute_kw()`, `search_read()`, `create()`, `write()`
@@ -62,19 +65,20 @@
     - Define Pydantic models for Odoo data in `app/schemas/odoo.py`
     - OdooEmployee, OdooAttendance, OdooLeave, OdooLeaveType, OdooLeaveAllocation, OdooContract
     - _Requirements: 5.6, 5.7_
-  - [ ]* 4.4 Write property test for JSON serialization round-trip
+  - [ ]\* 4.4 Write property test for JSON serialization round-trip
     - **Property 15: JSON Serialization Round-Trip**
     - **Validates: Requirements 9.1**
-  - [ ]* 4.5 Write property test for DateTime ISO 8601 format
+  - [ ]\* 4.5 Write property test for DateTime ISO 8601 format
     - **Property 16: DateTime ISO 8601 Format**
     - **Validates: Requirements 9.3**
 
 - [ ] 5. Implement User-Odoo Link Validation
+
   - [ ] 5.1 Create employee validation service
     - Implement `validate_odoo_employee_id()` in `app/services/employee_service.py`
     - Check if odoo_employee_id exists in Odoo hr.employee
     - _Requirements: 6.3_
-  - [ ]* 5.2 Write property test for User-Odoo link validation
+  - [ ]\* 5.2 Write property test for User-Odoo link validation
     - **Property 12: User-Odoo Employee Link Validation**
     - **Validates: Requirements 5.6, 6.1, 6.3**
 
@@ -84,6 +88,7 @@
 ## Phase 3: Attendance Module
 
 - [ ] 7. Implement Attendance Service
+
   - [ ] 7.1 Create attendance service
     - Implement `AttendanceService` in `app/services/attendance_service.py`
     - Methods: `check_in()`, `check_out()`, `get_history()`, `get_summary()`, `get_status()`
@@ -92,7 +97,7 @@
     - Check for active attendance (check_out is null) before creating new
     - Return error if duplicate
     - _Requirements: 2.6_
-  - [ ]* 7.3 Write property test for duplicate check-in prevention
+  - [ ]\* 7.3 Write property test for duplicate check-in prevention
     - **Property 5: Duplicate Check-in Prevention**
     - **Validates: Requirements 2.6**
   - [ ] 7.4 Create attendance endpoints
@@ -102,13 +107,13 @@
     - `GET /attendance/summary` - Get monthly summary
     - `GET /attendance/status` - Get current check-in status
     - _Requirements: 2.1, 2.2, 2.3, 2.5, 2.7_
-  - [ ]* 7.5 Write property test for attendance record consistency
+  - [ ]\* 7.5 Write property test for attendance record consistency
     - **Property 3: Attendance Record Consistency**
     - **Validates: Requirements 2.1, 2.2**
-  - [ ]* 7.6 Write property test for attendance history ordering
+  - [ ]\* 7.6 Write property test for attendance history ordering
     - **Property 4: Attendance History Ordering**
     - **Validates: Requirements 2.3**
-  - [ ]* 7.7 Write property test for attendance summary accuracy
+  - [ ]\* 7.7 Write property test for attendance summary accuracy
     - **Property 6: Attendance Summary Accuracy**
     - **Validates: Requirements 2.7**
 
@@ -118,6 +123,7 @@
 ## Phase 4: Leave Module
 
 - [ ] 9. Implement Leave Service
+
   - [ ] 9.1 Create leave service
     - Implement `LeaveService` in `app/services/leave_service.py`
     - Methods: `create_request()`, `confirm()`, `approve()`, `reject()`, `get_history()`, `get_balance()`, `get_types()`, `get_pending()`
@@ -126,27 +132,27 @@
     - Validate: end_date >= start_date, dates not in past
     - Return validation errors
     - _Requirements: 3.5_
-  - [ ]* 9.3 Write property test for leave date validation
+  - [ ]\* 9.3 Write property test for leave date validation
     - **Property 9: Leave Date Validation**
     - **Validates: Requirements 3.5**
   - [ ] 9.4 Implement leave overlap detection
     - Check for overlapping approved leaves
     - Return warning if overlap detected
     - _Requirements: 3.7_
-  - [ ]* 9.5 Write property test for leave overlap detection
+  - [ ]\* 9.5 Write property test for leave overlap detection
     - **Property 10: Leave Overlap Detection**
     - **Validates: Requirements 3.7**
   - [ ] 9.6 Implement leave state transitions
     - Validate state flow: draft → confirm → (validate | refuse)
     - Reject invalid transitions
     - _Requirements: 3.1, 3.2, 3.8, 3.9_
-  - [ ]* 9.7 Write property test for leave state transitions
+  - [ ]\* 9.7 Write property test for leave state transitions
     - **Property 7: Leave Request State Transitions**
     - **Validates: Requirements 3.1, 3.2, 3.8, 3.9**
   - [ ] 9.8 Implement leave balance calculation
     - Calculate: remaining = allocated - used
     - _Requirements: 3.3_
-  - [ ]* 9.9 Write property test for leave balance calculation
+  - [ ]\* 9.9 Write property test for leave balance calculation
     - **Property 8: Leave Balance Calculation**
     - **Validates: Requirements 3.3**
   - [ ] 9.10 Create leave endpoints
@@ -166,6 +172,7 @@
 ## Phase 5: Profile & User Management
 
 - [ ] 11. Implement Profile Service
+
   - [ ] 11.1 Create profile service
     - Implement `ProfileService` in `app/services/profile_service.py`
     - Methods: `get_profile()`, `update_profile()`, `get_contract()`
@@ -177,6 +184,7 @@
     - _Requirements: 4.1, 4.2, 4.5_
 
 - [ ] 12. Implement User Management Service
+
   - [ ] 12.1 Create user management service
     - Implement `UserService` in `app/services/user_service.py`
     - Methods: `create_user()`, `update_user()`, `delete_user()`, `list_users()`, `get_team()`
@@ -190,6 +198,7 @@
     - _Requirements: 6.1, 6.2, 6.4, 6.6_
 
 - [ ] 13. Implement Role-Based Access Control
+
   - [ ] 13.1 Create RBAC middleware
     - Implement role checking decorator/dependency
     - Check JWT role against endpoint requirements
@@ -199,10 +208,10 @@
     - Filter pending leaves by manager's department
     - Filter team members by department
     - _Requirements: 3.10, 6.6_
-  - [ ]* 13.3 Write property test for RBAC
+  - [ ]\* 13.3 Write property test for RBAC
     - **Property 14: Role-Based Access Control**
     - **Validates: Requirements 7.1, 7.2, 7.3, 7.4**
-  - [ ]* 13.4 Write property test for manager department scope
+  - [ ]\* 13.4 Write property test for manager department scope
     - **Property 11: Manager Department Scope**
     - **Validates: Requirements 3.10, 6.6**
 
@@ -212,6 +221,7 @@
 ## Phase 6: Frontend Foundation
 
 - [ ] 15. Set up React + Vite project
+
   - [ ] 15.1 Initialize Vite React TypeScript project
     - Create project with `npm create vite@latest`
     - Install dependencies: react-router-dom, axios, @tanstack/react-query, fast-check
@@ -229,6 +239,7 @@
     - _Requirements: 8.3, 8.5_
 
 - [ ] 16. Implement Auth Module (Frontend)
+
   - [ ] 16.1 Create auth context and hooks
     - Implement `AuthContext` for global auth state
     - Create `useAuth()` hook
@@ -251,6 +262,7 @@
 ## Phase 7: Frontend Features
 
 - [ ] 18. Implement Attendance Module (Frontend)
+
   - [ ] 18.1 Create attendance page
     - Check-in/Check-out button with status indicator
     - Current session timer (when checked in)
@@ -264,6 +276,7 @@
     - _Requirements: 2.7_
 
 - [ ] 19. Implement Leave Module (Frontend)
+
   - [ ] 19.1 Create leave request form
     - Leave type selector
     - Date range picker
@@ -283,6 +296,7 @@
     - _Requirements: 3.8, 3.9, 3.10_
 
 - [ ] 20. Implement Profile Module (Frontend)
+
   - [ ] 20.1 Create profile page
     - Display employee info from Odoo
     - Edit form for allowed fields
@@ -292,6 +306,7 @@
     - _Requirements: 4.5_
 
 - [ ] 21. Implement Admin Module (Frontend)
+
   - [ ] 21.1 Create user management page
     - User list table
     - Create/Edit user modal
@@ -302,6 +317,7 @@
     - _Requirements: 6.6_
 
 - [ ] 22. Implement Offline Handling
+
   - [ ] 22.1 Create offline indicator component
     - Show banner when offline
     - Disable data operations
