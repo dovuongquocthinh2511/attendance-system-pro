@@ -1,8 +1,8 @@
-from typing import Generator
+from typing import Generator, List
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
-from app.core import security  
+from app.core import security
 from app.core.database import SessionLocal
 from app.models.user import User
 from app.models.token_blacklist import TokenBlacklist
@@ -37,3 +37,12 @@ def get_current_user(
         raise HTTPException(status_code=404, detail="User not found")
         
     return user
+
+class RoleChecker:
+    def __init__(self, allowed_roles: List[str]):
+        self.allowed_roles = allowed_roles
+
+    def __call__(self, user: User = Depends(get_current_user)):
+        if user.role not in self.allowed_roles:
+            raise HTTPException(status_code=403, detail="Not authorized")
+        return user
