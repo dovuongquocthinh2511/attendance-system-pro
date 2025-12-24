@@ -26,14 +26,14 @@
     - Implement `create_access_token()` and `verify_token()` in `app/core/security.py`
     - Token payload: sub (user_id), role, odoo_employee_id, exp
     - _Requirements: 1.1, 1.6_
-  - [ ]\* 2.2 Write property test for JWT token role
+  - [ ] 2.2 Write property test for JWT token role
     - **Property 1: JWT Token Contains Correct Role**
     - **Validates: Requirements 1.1, 1.6**
   - [ ] 2.3 Implement password hashing utilities
     - Use bcrypt for hashing in `app/core/security.py`
     - Implement `hash_password()` and `verify_password()`
     - _Requirements: 6.5_
-  - [ ]\* 2.4 Write property test for password hashing
+  - [ ] 2.4 Write property test for password hashing
     - **Property 13: Password Hashing**
     - **Validates: Requirements 6.5**
   - [ ] 2.5 Create auth endpoints
@@ -41,7 +41,7 @@
     - `POST /auth/logout` - Invalidate token (add to blacklist)
     - `POST /auth/refresh` - Refresh JWT token
     - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5_
-  - [ ]\* 2.6 Write property test for invalid credentials
+  - [ ] 2.6 Write property test for invalid credentials
     - **Property 2: Invalid Credentials Rejection**
     - **Validates: Requirements 1.2**
 
@@ -65,10 +65,10 @@
     - Define Pydantic models for Odoo data in `app/schemas/odoo.py`
     - OdooEmployee, OdooAttendance, OdooLeave, OdooLeaveType, OdooLeaveAllocation, OdooContract
     - _Requirements: 5.6, 5.7_
-  - [ ]\* 4.4 Write property test for JSON serialization round-trip
+  - [ ] 4.4 Write property test for JSON serialization round-trip
     - **Property 15: JSON Serialization Round-Trip**
     - **Validates: Requirements 9.1**
-  - [ ]\* 4.5 Write property test for DateTime ISO 8601 format
+  - [ ] 4.5 Write property test for DateTime ISO 8601 format
     - **Property 16: DateTime ISO 8601 Format**
     - **Validates: Requirements 9.3**
 
@@ -78,7 +78,7 @@
     - Implement `validate_odoo_employee_id()` in `app/services/employee_service.py`
     - Check if odoo_employee_id exists in Odoo hr.employee
     - _Requirements: 6.3_
-  - [ ]\* 5.2 Write property test for User-Odoo link validation
+  - [ ] 5.2 Write property test for User-Odoo link validation
     - **Property 12: User-Odoo Employee Link Validation**
     - **Validates: Requirements 5.6, 6.1, 6.3**
 
@@ -97,7 +97,7 @@
     - Check for active attendance (check_out is null) before creating new
     - Return error if duplicate
     - _Requirements: 2.6_
-  - [ ]\* 7.3 Write property test for duplicate check-in prevention
+  - [ ] 7.3 Write property test for duplicate check-in prevention
     - **Property 5: Duplicate Check-in Prevention**
     - **Validates: Requirements 2.6**
   - [ ] 7.4 Create attendance endpoints
@@ -107,13 +107,13 @@
     - `GET /attendance/summary` - Get monthly summary
     - `GET /attendance/status` - Get current check-in status
     - _Requirements: 2.1, 2.2, 2.3, 2.5, 2.7_
-  - [ ]\* 7.5 Write property test for attendance record consistency
+  - [ ] 7.5 Write property test for attendance record consistency
     - **Property 3: Attendance Record Consistency**
     - **Validates: Requirements 2.1, 2.2**
-  - [ ]\* 7.6 Write property test for attendance history ordering
+  - [ ] 7.6 Write property test for attendance history ordering
     - **Property 4: Attendance History Ordering**
     - **Validates: Requirements 2.3**
-  - [ ]\* 7.7 Write property test for attendance summary accuracy
+  - [ ] 7.7 Write property test for attendance summary accuracy
     - **Property 6: Attendance Summary Accuracy**
     - **Validates: Requirements 2.7**
 
@@ -132,27 +132,27 @@
     - Validate: end_date >= start_date, dates not in past
     - Return validation errors
     - _Requirements: 3.5_
-  - [ ]\* 9.3 Write property test for leave date validation
+  - [ ] 9.3 Write property test for leave date validation
     - **Property 9: Leave Date Validation**
     - **Validates: Requirements 3.5**
   - [ ] 9.4 Implement leave overlap detection
     - Check for overlapping approved leaves
     - Return warning if overlap detected
     - _Requirements: 3.7_
-  - [ ]\* 9.5 Write property test for leave overlap detection
+  - [ ] 9.5 Write property test for leave overlap detection
     - **Property 10: Leave Overlap Detection**
     - **Validates: Requirements 3.7**
   - [ ] 9.6 Implement leave state transitions
     - Validate state flow: draft → confirm → (validate | refuse)
     - Reject invalid transitions
     - _Requirements: 3.1, 3.2, 3.8, 3.9_
-  - [ ]\* 9.7 Write property test for leave state transitions
+  - [ ] 9.7 Write property test for leave state transitions
     - **Property 7: Leave Request State Transitions**
     - **Validates: Requirements 3.1, 3.2, 3.8, 3.9**
   - [ ] 9.8 Implement leave balance calculation
     - Calculate: remaining = allocated - used
     - _Requirements: 3.3_
-  - [ ]\* 9.9 Write property test for leave balance calculation
+  - [ ] 9.9 Write property test for leave balance calculation
     - **Property 8: Leave Balance Calculation**
     - **Validates: Requirements 3.3**
   - [ ] 9.10 Create leave endpoints
@@ -208,10 +208,10 @@
     - Filter pending leaves by manager's department
     - Filter team members by department
     - _Requirements: 3.10, 6.6_
-  - [ ]\* 13.3 Write property test for RBAC
+  - [ ] 13.3 Write property test for RBAC
     - **Property 14: Role-Based Access Control**
     - **Validates: Requirements 7.1, 7.2, 7.3, 7.4**
-  - [ ]\* 13.4 Write property test for manager department scope
+  - [ ] 13.4 Write property test for manager department scope
     - **Property 11: Manager Department Scope**
     - **Validates: Requirements 3.10, 6.6**
 
