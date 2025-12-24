@@ -1,12 +1,14 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from app.core.database import engine, SessionLocal, Base
-from app.api.endpoints import auth, users
+from app.api.endpoints import auth, users, attendance, leave, profile
 from app.core.security import hash_password
 from app.models.user import User
+from app.core.exceptions import BestmixException
 
 def create_initial_data(db: Session):
     admin_user = db.query(User).filter(User.email == "admin@bestmix.vn").first()
@@ -56,13 +58,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- ĐĂNG KÝ ROUTER (Controller) ---
-# Gắn các API Login vàfrom app.api.endpoints import auth, users, attendance, leave
+# --- EXCEPTION HANDLER ---
+@app.exception_handler(BestmixException)
+async def bestmix_exception_handler(request: Request, exc: BestmixException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "success": False,
+            "error": exc.message,
+            "error_code": exc.error_code
+        }
+    )
 
+# --- ĐĂNG KÝ ROUTER (Controller) ---
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(users.router, prefix="/users", tags=["users"])
 app.include_router(attendance.router, prefix="/attendance", tags=["attendance"])
 app.include_router(leave.router, prefix="/leave", tags=["leave"])
+app.include_router(profile.router, prefix="/profile", tags=["profile"])
 
 # --- API TEST ---
 @app.get("/")
