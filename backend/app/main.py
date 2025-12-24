@@ -57,11 +57,12 @@ app.add_middleware(
 )
 
 # --- ĐĂNG KÝ ROUTER (Controller) ---
-# Gắn các API Login vàfrom app.api.endpoints import auth, users, attendance
+# Gắn các API Login vàfrom app.api.endpoints import auth, users, attendance, leave
 
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(users.router, prefix="/users", tags=["users"])
 app.include_router(attendance.router, prefix="/attendance", tags=["attendance"])
+app.include_router(leave.router, prefix="/leave", tags=["leave"])
 
 # --- API TEST ---
 @app.get("/")
