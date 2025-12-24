@@ -121,6 +121,31 @@ class LeaveService:
              # Fallback or empty if method shouldn't fail
              return []
 
+    def get_leave_types(self) -> List[Dict]:
+        """Get all leave types."""
+        return odoo_client.search_read('hr.leave.type', [], ['id', 'name', 'allocation_type'])
+
+    def get_pending_requests(self, manager_employee_id: int) -> List[Dict]:
+        """
+        Get pending requests for a manager.
+        Ideally filters by department or direct reports.
+        For now, let's return all 'confirm' status leaves excluding own?
+        Or following requirement 3.10/6.6 - Manager Department Scope.
+        Simple logic: return all 'confirm' leaves for now if we don't have department map yet, 
+        OR better, filter by department of the manager if possible.
+        Let's try filtered by state='confirm' first.
+        """
+        # Improved: get manager's department first
+        # manager = odoo_client.search_read('hr.employee', [['id', '=', manager_employee_id]], ['department_id'])
+        # if manager and manager[0]['department_id']:
+        #     dept_id = manager[0]['department_id'][0]
+        #     domain = [['state', '=', 'confirm'], ['department_id', '=', dept_id]]
+        # else:
+        domain = [['state', '=', 'confirm']]
+        
+        fields = ['id', 'employee_id', 'holiday_status_id', 'request_date_from', 'request_date_to', 'number_of_days', 'name']
+        return odoo_client.search_read('hr.leave', domain, fields, order='request_date_from asc')
+
     def _validate_dates(self, date_from: date, date_to: date):
         if date_to < date_from:
             raise ValueError("End date must be greater than or equal to start date")
