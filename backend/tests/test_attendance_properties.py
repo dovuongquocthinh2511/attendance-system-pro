@@ -2,6 +2,7 @@ from hypothesis import given, strategies as st
 from unittest.mock import MagicMock, patch
 from datetime import datetime, timedelta
 from app.services.attendance_service import attendance_service
+from app.core.exceptions import DuplicateCheckinError, NotFoundError
 
 # --- Property 5: Duplicate Check-in Prevention ---
 # Validates Requirement 2.6
@@ -11,11 +12,11 @@ def test_duplicate_checkin_prevention(odoo_id):
     with patch('app.services.attendance_service.attendance_service.get_status') as mock_status:
         mock_status.return_value = {'id': 123, 'check_in': '2023-01-01 08:00:00'}
         
-        # Expect ValueError when trying to check in again
+        # Expect DuplicateCheckinError when trying to check in again
         try:
             attendance_service.check_in(odoo_id)
-            assert False, "Should have raised ValueError for duplicate check-in"
-        except ValueError as e:
+            assert False, "Should have raised DuplicateCheckinError"
+        except DuplicateCheckinError as e:
             assert str(e) == "Employee is already checked in"
 
 # --- Property 3: Record Consistency ---
@@ -28,8 +29,8 @@ def test_checkout_consistency(odoo_id):
         mock_status.return_value = None
         try:
             attendance_service.check_out(odoo_id)
-            assert False, "Should have raised ValueError if not checked in"
-        except ValueError as e:
+            assert False, "Should have raised NotFoundError if not checked in"
+        except NotFoundError as e:
             assert str(e) == "Employee is not checked in"
 
         # Case 2: Checked in -> Check-out succeeds

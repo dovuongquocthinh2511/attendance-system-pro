@@ -1,7 +1,10 @@
 import xmlrpc.client
 from typing import Any, List, Optional
 from app.core.config import settings
-from app.core.exceptions import OdooConnectionError, OdooAuthError, OdooAPIError
+from app.core.exceptions import OdooConnectionError, OdooAPIError, AuthenticationError
+
+# Alias for backward compatibility if needed, or just use AuthenticationError
+OdooAuthError = AuthenticationError
 
 class OdooClient:
     def __init__(self):
@@ -23,7 +26,7 @@ class OdooClient:
             self.uid = self.common.authenticate(self.db, self.username, self.password, {})
             
             if not self.uid:
-                raise OdooAuthError(f"Authentication failed for user {self.username}")
+                raise AuthenticationError(f"Authentication failed for user {self.username}")
                 
             self.models = xmlrpc.client.ServerProxy(f'{self.url}/xmlrpc/2/object')
             print(f"--- Đã kết nối Odoo thành công! UID: {self.uid} ---")
@@ -31,7 +34,7 @@ class OdooClient:
         except ConnectionRefusedError:
              raise OdooConnectionError(f"Could not connect to Odoo at {self.url}")
         except Exception as e:
-            if isinstance(e, OdooAuthError):
+            if isinstance(e, AuthenticationError):
                 raise e
             raise OdooConnectionError(f"Odoo connection error: {str(e)}")
 
@@ -53,11 +56,13 @@ class OdooClient:
         except Exception as e:
              raise OdooAPIError(f"Odoo Execution Error: {str(e)}")
 
-    def search_read(self, model: str, domain: List[Any], fields: List[str], limit: int = None) -> List[dict]:
+    def search_read(self, model: str, domain: List[Any], fields: List[str], limit: int = None, order: str = None) -> List[dict]:
         """Helper for search_read method."""
         kwargs = {'fields': fields}
         if limit:
             kwargs['limit'] = limit
+        if order:
+            kwargs['order'] = order
         return self.execute_kw(model, 'search_read', [domain], kwargs)
 
 odoo_client = OdooClient()
