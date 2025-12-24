@@ -14,6 +14,15 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     password: str
 
+# Properties to receive via API on update
+class UserUpdate(BaseModel):
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
+    password: Optional[str] = None
+    role: Optional[str] = None
+    odoo_employee_id: Optional[int] = None
+    is_active: Optional[bool] = None
+
 # Properties to return via API
 class UserResponse(UserBase):
     id: int
