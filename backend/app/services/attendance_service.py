@@ -1,8 +1,7 @@
 from datetime import datetime
 from typing import List, Optional, Any
 from app.services.odoo_client import odoo_client
-from app.schemas.odoo import OdooAttendance
-from app.core.exceptions import OdooAPIError
+from app.core.exceptions import OdooAPIError, DuplicateCheckinError, NotFoundError
 
 class AttendanceService:
     def get_status(self, odoo_employee_id: int) -> Optional[dict]:
@@ -26,16 +25,8 @@ class AttendanceService:
         # 1. Validation: Check if already checked in
         current_status = self.get_status(odoo_employee_id)
         if current_status:
-            raise ValueError("Employee is already checked in")
+            raise DuplicateCheckinError()
 
-        # 2. Create record
-        # Odoo automatically sets check_in time to NOW if not provided, 
-        # but providing it ensures consistency with our server time if needed.
-        # However, let's let Odoo handle the timestamp to match server time logic usually.
-        # But wait, we might want to send it. Let's send it for explicit control or rely on Odoo default.
-        # Using Odoo default is safer for timezone consistency if Odoo is configured correctly.
-        # But for 'create', we usually just pass employee_id.
-        
         try:
             attendance_id = odoo_client.execute_kw(
                 'hr.attendance', 'create', [{'employee_id': odoo_employee_id}]
@@ -51,14 +42,10 @@ class AttendanceService:
         # 1. specific logic: Find open attendance
         current_status = self.get_status(odoo_employee_id)
         if not current_status:
-            raise ValueError("Employee is not checked in")
+            raise NotFoundError("Employee is not checked in")
 
         attendance_id = current_status['id']
         
-        # 2. Update record with check_out time = NOW
-        # In Odoo, writing 'check_out': datetime.now() works.
-        # Or letting Odoo handle it might require a specific method call.
-        # Standard Odoo 'hr.attendance' usually requires providing the time for 'check_out' field update.
         now = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
         
         try:
@@ -75,8 +62,6 @@ class AttendanceService:
         """
         domain = [['employee_id', '=', odoo_employee_id]]
         fields = ['id', 'check_in', 'check_out', 'worked_hours']
-        # Helper in odoo_client might not support sort, so we use execute_kw directly if needed
-        # But wait, search_read kw args support 'order'.
         
         return odoo_client.execute_kw(
             'hr.attendance', 'search_read', [domain], 
