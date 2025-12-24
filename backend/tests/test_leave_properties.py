@@ -2,6 +2,7 @@ from hypothesis import given, strategies as st
 from unittest.mock import MagicMock, patch
 from datetime import date, timedelta, datetime
 from app.services.leave_service import leave_service
+from app.core.exceptions import OdooAPIError, LeaveOverlapError
 
 # --- Property 9: Leave Date Validation ---
 # Requirement 3.5: End date >= Start date, Not in past
@@ -24,8 +25,12 @@ def test_leave_date_validation(start_offset, duration):
         leave_service._validate_dates(start_date, end_date)
         if should_fail:
             assert False, f"Should have failed for start={start_date}, end={end_date}"
-    except ValueError as e:
+    except OdooAPIError as e:
         if not should_fail:
+            assert False, f"Should NOT have failed: {str(e)}"
+    except ValueError as e:
+         # Fallback if service raises ValueError in some paths (legacy check)
+         if not should_fail:
             assert False, f"Should NOT have failed: {str(e)}"
 
 # --- Property 10: Overlap Detection ---
@@ -45,26 +50,9 @@ def test_overlap_detection(existing_start, existing_duration, new_start_offset, 
     new_end = new_start + timedelta(days=new_duration)
     
     # Determine basic overlap logic
-    # Overlap if (StartA <= EndB) and (EndA >= StartB)
     overlap = (existing_start <= new_end) and (existing_end >= new_start)
     
-    # Mock search_count to simulate existence check
-    # We mock _check_overlap's odoo call. 
-    # But wait, existing_start/end are inputs to the Property. 
-    # We must mock the Odoo response to match "overlap expectation".
-    # Actually, the Service logic asks Odoo for count based on domain.
-    # To test the SERVICE logic ensuring it constructs domain correctly:
-    
     with patch('app.services.leave_service.odoo_client.execute_kw') as mock_execute:
-        # If we want to simulate Odoo finding an overlap, we allow search_count to return 1 if logic dictates?
-        # No, simpler: We trust Odoo's search logic, but we want to verify our Service *checks* it.
-        # But for Property Testing the business logic "Reject if overlap", 
-        # let's mock the return of `_check_overlap` internal or `execute_kw`.
-        
-        # Let's test the helper _check_overlap directly? 
-        # It relies on Odoo search query. 
-        # Let's instead test confirm_request mocks.
-        
         with patch('app.services.leave_service.leave_service._check_overlap') as mock_check:
             mock_check.return_value = overlap
             
@@ -85,9 +73,14 @@ def test_overlap_detection(existing_start, existing_duration, new_start_offset, 
                         leave_service.confirm_request(123, 1)
                         if overlap:
                             assert False, "Should fail due to overlap"
-                    except ValueError as e:
+                    except LeaveOverlapError as e:
+                        if not overlap:
+                            raise e # Unexpected error if no overlap
+                    except Exception as e:
                         if overlap:
-                            assert str(e) == "Leave request overlaps with an existing approved or confirmed leave"
+                             # If we get here, it might be OdooAPIError or others, but specifically LeaveOverlapError is expected
+                             # But let's check if the generic 'ValueError' assumption is gone.
+                             assert False, f"Expected LeaveOverlapError, got {type(e).__name__}: {e}"
                         else:
                             raise e
 
@@ -95,7 +88,6 @@ def test_overlap_detection(existing_start, existing_duration, new_start_offset, 
 # Validate flow: draft -> confirm -> validate/refuse
 def test_state_transitions():
     # Valid Flow
-    # draft -> confirm
     with patch('app.services.leave_service.leave_service._get_request') as mock_get:
         mock_get.return_value = {
             'employee_id': [1, 'Test'], 
@@ -116,7 +108,7 @@ def test_state_transitions():
         try:
              leave_service.confirm_request(1, 1)
              assert False, "Should fail transition from validate to confirm"
-        except ValueError as e:
+        except OdooAPIError as e:
             assert "Invalid state transition" in str(e)
 
 # --- Property 8: Balance Calculation ---
@@ -139,6 +131,5 @@ def test_balance_calculation(allocated, taken):
              mock_search.return_value = [{'id': 10, 'name': 'Paid Time Off'}]
              
              balance = leave_service.get_balance(employee_id=1)
-             # Logic is essentially getting Odoo's value, but verifying our parser
              assert len(balance) == 1
              assert balance[0]['remaining'] == allocated - taken
