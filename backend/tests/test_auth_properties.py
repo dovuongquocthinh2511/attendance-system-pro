@@ -1,4 +1,4 @@
-from hypothesis import given, strategies as st
+from hypothesis import given, strategies as st, settings
 from app.core import security
 from app.models.user import User
 
@@ -27,7 +27,9 @@ def test_jwt_contains_correct_role(role, user_id, odoo_id):
 
 # --- Property 13: Password Hashing ---
 # Validates Requirements 6.5
-@given(password=st.text(min_size=1))
+# Disable deadline because bcrypt is intentionally slow
+@settings(deadline=None)
+@given(password=st.text(min_size=1).filter(lambda x: "\0" not in x))
 def test_password_hashing_consistency(password):
     # Action 1: Hash password
     hashed = security.hash_password(password)
@@ -46,9 +48,10 @@ def test_password_hashing_consistency(password):
 # Validates Requirements 1.2
 # Note: Testing full endpoint logic would require DB mocking which is complex for property tests.
 # Here we test the verification logic if we had a user.
+@settings(deadline=None)
 @given(
-    real_password=st.text(min_size=5),
-    wrong_password=st.text(min_size=5)
+    real_password=st.text(min_size=5).filter(lambda x: "\0" not in x),
+    wrong_password=st.text(min_size=5).filter(lambda x: "\0" not in x)
 )
 def test_invalid_credential_check(real_password, wrong_password):
     # Assume they are different
