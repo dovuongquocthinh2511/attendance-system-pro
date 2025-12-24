@@ -20,7 +20,7 @@ database.db
 *~
 
 # Ignore summary structure file
-summary-structure.md
+#summary-structure.md
 
 # Ignore docker files
 docker-compose.yml
