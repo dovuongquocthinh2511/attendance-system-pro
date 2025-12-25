@@ -5,6 +5,8 @@ from app.models.user import User
 from app.services.profile_service import profile_service
 from app.schemas.response import APIResponse
 from app.schemas.odoo import OdooEmployee, OdooContract
+from app.schemas.profile import ProfileUpdate
+from app.schemas.common import ActionResponse
 
 router = APIRouter()
 
@@ -17,9 +19,9 @@ def get_my_profile(current_user: User = Depends(deps.get_current_user)):
     profile = profile_service.get_profile(current_user.odoo_employee_id)
     return APIResponse(data=profile)
 
-@router.put("/", response_model=APIResponse[dict])
+@router.put("/", response_model=APIResponse[ActionResponse])
 def update_my_profile(
-    updates: Dict[str, Any] = Body(...),
+    updates: ProfileUpdate,
     current_user: User = Depends(deps.get_current_user)
 ):
     """
@@ -30,10 +32,13 @@ def update_my_profile(
         raise HTTPException(status_code=400, detail="User not linked to Odoo Employee")
         
     try:
-        success = profile_service.update_profile(current_user.odoo_employee_id, updates)
+        # Convert pydantic model to dict, excluding unset fields
+        update_data = updates.dict(exclude_unset=True)
+        
+        success = profile_service.update_profile(current_user.odoo_employee_id, update_data)
         if success:
-             return APIResponse(data={"msg": "Profile updated successfully"})
-        return APIResponse(data={"msg": "No changes made or invalid fields"})
+             return APIResponse(data=ActionResponse(msg="Profile updated successfully"))
+        return APIResponse(data=ActionResponse(msg="No changes made or invalid fields"))
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 

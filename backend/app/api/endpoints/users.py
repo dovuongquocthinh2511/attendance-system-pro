@@ -5,6 +5,7 @@ from app.api import deps
 from app.schemas.user import UserCreate, UserResponse, UserUpdate
 from app.services.user_service import user_service
 from app.models.user import User
+from app.schemas.response import APIResponse
 
 router = APIRouter()
 
@@ -21,7 +22,6 @@ def create_user(
         raise HTTPException(status_code=403, detail="Not authorized")
     return user_service.create_user(db, user_in)
 
-from app.schemas.response import APIResponse
 
 @router.get("/", response_model=APIResponse[List[UserResponse]])
 def read_users(
