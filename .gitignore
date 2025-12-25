@@ -19,12 +19,10 @@ database.db
 # Ignore temporary files
 *~
 
-# Ignore summary structure file
-summary-structure.md
-
 # Ignore docker files
 docker-compose.yml
 Dockerfile
 
-# Ignore hypothesis files
-.hypothesis
+# Ignore hypothesis
+.hypothesis/
+
