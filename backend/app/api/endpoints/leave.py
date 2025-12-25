@@ -1,22 +1,16 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List
-from datetime import date
-from pydantic import BaseModel
 from app.api import deps
 from app.models.user import User
 from app.services.leave_service import leave_service
 from app.schemas.response import APIResponse
 from app.schemas.odoo import OdooLeave, OdooLeaveType, OdooLeaveAllocation
+from app.schemas.leave import LeaveRequestCreate
+from app.schemas.common import ActionResponse
 
 router = APIRouter()
 
-class LeaveRequestCreate(BaseModel):
-    leave_type_id: int
-    date_from: date
-    date_to: date
-    description: str = ""
-
-@router.post("/request", response_model=APIResponse[dict])
+@router.post("/request", response_model=APIResponse[ActionResponse])
 def create_request(
     request: LeaveRequestCreate,
     current_user: User = Depends(deps.get_current_user)
@@ -33,11 +27,11 @@ def create_request(
             request.date_to,
             request.description
         )
-        return APIResponse(data={"msg": "Leave request created", "id": leave_id, "state": "draft"})
+        return APIResponse(data=ActionResponse(msg="Leave request created", id=leave_id, state="draft"))
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.post("/{leave_id}/confirm", response_model=APIResponse[dict])
+@router.post("/{leave_id}/confirm", response_model=APIResponse[ActionResponse])
 def confirm_request(
     leave_id: int,
     current_user: User = Depends(deps.get_current_user)
@@ -48,7 +42,7 @@ def confirm_request(
         
     try:
         leave_service.confirm_request(leave_id, current_user.odoo_employee_id)
-        return APIResponse(data={"msg": "Leave request confirmed"})
+        return APIResponse(data=ActionResponse(msg="Leave request confirmed"))
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -78,7 +72,7 @@ def get_leave_types(current_user: User = Depends(deps.get_current_user)):
     types = leave_service.get_leave_types()
     return APIResponse(data=types)
 
-@router.post("/{leave_id}/approve", response_model=APIResponse[dict])
+@router.post("/{leave_id}/approve", response_model=APIResponse[ActionResponse])
 def approve_request(
     leave_id: int,
     current_user: User = Depends(deps.get_current_user)
@@ -89,11 +83,11 @@ def approve_request(
         
     try:
         leave_service.approve_request(leave_id)
-        return APIResponse(data={"msg": "Leave approved"})
+        return APIResponse(data=ActionResponse(msg="Leave approved"))
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.post("/{leave_id}/reject", response_model=APIResponse[dict])
+@router.post("/{leave_id}/reject", response_model=APIResponse[ActionResponse])
 def reject_request(
     leave_id: int,
     current_user: User = Depends(deps.get_current_user)
@@ -104,7 +98,7 @@ def reject_request(
         
     try:
         leave_service.reject_request(leave_id)
-        return APIResponse(data={"msg": "Leave rejected"})
+        return APIResponse(data=ActionResponse(msg="Leave rejected"))
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 

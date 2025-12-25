@@ -17,27 +17,51 @@ class AttendanceService:
         records = odoo_client.search_read('hr.attendance', domain, ['id', 'check_in'], limit=1)
         return records[0] if records else None
 
-    def check_in(self, odoo_employee_id: int) -> int:
+    def check_in(
+        self, 
+        odoo_employee_id: int,
+        latitude: Optional[float] = None,
+        longitude: Optional[float] = None,
+        ip_address: Optional[str] = None,
+        mode: Optional[str] = "manual"
+    ) -> int:
         """
         Create a new attendance record (Check In).
         Prevents duplicate check-in if already checked in.
+        Includes metadata: GPS, IP, Mode.
         """
         # 1. Validation: Check if already checked in
         current_status = self.get_status(odoo_employee_id)
         if current_status:
             raise DuplicateCheckinError()
 
+        vals = {
+            'employee_id': odoo_employee_id,
+            'in_latitude': latitude,
+            'in_longitude': longitude,
+            'in_ip_address': ip_address,
+            'in_mode': mode
+        }
+
         try:
             attendance_id = odoo_client.execute_kw(
-                'hr.attendance', 'create', [{'employee_id': odoo_employee_id}]
+                'hr.attendance', 'create', [vals]
             )
             return attendance_id
         except Exception as e:
             raise OdooAPIError(f"Failed to check in: {str(e)}")
 
-    def check_out(self, odoo_employee_id: int) -> bool:
+    def check_out(
+        self, 
+        odoo_employee_id: int,
+        latitude: Optional[float] = None,
+        longitude: Optional[float] = None,
+        ip_address: Optional[str] = None,
+        mode: Optional[str] = "manual"
+    ) -> bool:
         """
         Update the open attendance record (Check Out).
+        Includes metadata: GPS, IP, Mode.
         """
         # 1. specific logic: Find open attendance
         current_status = self.get_status(odoo_employee_id)
@@ -48,9 +72,17 @@ class AttendanceService:
         
         now = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
         
+        vals = {
+            'check_out': now,
+            'out_latitude': latitude,
+            'out_longitude': longitude,
+            'out_ip_address': ip_address,
+            'out_mode': mode
+        }
+
         try:
             success = odoo_client.execute_kw(
-                'hr.attendance', 'write', [[attendance_id], {'check_out': now}]
+                'hr.attendance', 'write', [[attendance_id], vals]
             )
             return success
         except Exception as e:
@@ -61,7 +93,7 @@ class AttendanceService:
         Get attendance history for employee.
         """
         domain = [['employee_id', '=', odoo_employee_id]]
-        fields = ['id', 'check_in', 'check_out', 'worked_hours']
+        fields = ['id', 'employee_id', 'check_in', 'check_out', 'worked_hours']
         
         return odoo_client.execute_kw(
             'hr.attendance', 'search_read', [domain], 
