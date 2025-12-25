@@ -24,8 +24,13 @@ class UserUpdate(BaseModel):
     is_active: Optional[bool] = None
 
 # Properties to return via API
-class UserResponse(UserBase):
+class UserResponse(BaseModel):
     id: int
+    email: EmailStr
+    phone: Optional[str] = None
+    role: Optional[str] = "employee"
+    odoo_employee_id: Optional[int] = None
+    is_active: bool
     created_at: datetime
     updated_at: datetime
 

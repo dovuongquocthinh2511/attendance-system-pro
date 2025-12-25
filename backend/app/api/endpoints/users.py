@@ -21,7 +21,9 @@ def create_user(
         raise HTTPException(status_code=403, detail="Not authorized")
     return user_service.create_user(db, user_in)
 
-@router.get("/", response_model=List[UserResponse])
+from app.schemas.response import APIResponse
+
+@router.get("/", response_model=APIResponse[List[UserResponse]])
 def read_users(
     skip: int = 0,
     limit: int = 100,
@@ -31,7 +33,8 @@ def read_users(
     """Admin list users."""
     if current_user.role != 'admin':
         raise HTTPException(status_code=403, detail="Not authorized")
-    return user_service.get_users(db, skip, limit)
+    users = user_service.get_users(db, skip, limit)
+    return APIResponse(data=users)
 
 @router.put("/{user_id}", response_model=UserResponse)
 def update_user(

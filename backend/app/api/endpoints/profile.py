@@ -3,18 +3,21 @@ from typing import Dict, Any
 from app.api import deps
 from app.models.user import User
 from app.services.profile_service import profile_service
+from app.schemas.response import APIResponse
+from app.schemas.odoo import OdooEmployee, OdooContract
 
 router = APIRouter()
 
-@router.get("/")
+@router.get("/", response_model=APIResponse[OdooEmployee])
 def get_my_profile(current_user: User = Depends(deps.get_current_user)):
     """Get current user's Odoo profile."""
     if not current_user.odoo_employee_id:
         raise HTTPException(status_code=400, detail="User not linked to Odoo Employee")
         
-    return profile_service.get_profile(current_user.odoo_employee_id)
+    profile = profile_service.get_profile(current_user.odoo_employee_id)
+    return APIResponse(data=profile)
 
-@router.put("/")
+@router.put("/", response_model=APIResponse[dict])
 def update_my_profile(
     updates: Dict[str, Any] = Body(...),
     current_user: User = Depends(deps.get_current_user)
@@ -29,12 +32,12 @@ def update_my_profile(
     try:
         success = profile_service.update_profile(current_user.odoo_employee_id, updates)
         if success:
-             return {"msg": "Profile updated successfully"}
-        return {"msg": "No changes made or invalid fields"}
+             return APIResponse(data={"msg": "Profile updated successfully"})
+        return APIResponse(data={"msg": "No changes made or invalid fields"})
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.get("/contract")
+@router.get("/contract", response_model=APIResponse[OdooContract])
 def get_my_contract(current_user: User = Depends(deps.get_current_user)):
     """Get current user's active contract."""
     if not current_user.odoo_employee_id:
@@ -43,4 +46,4 @@ def get_my_contract(current_user: User = Depends(deps.get_current_user)):
     contract = profile_service.get_contract(current_user.odoo_employee_id)
     if not contract:
         raise HTTPException(status_code=404, detail="No active contract found")
-    return contract
+    return APIResponse(data=contract)
