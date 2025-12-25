@@ -5,6 +5,8 @@ from pydantic import BaseModel
 from app.api import deps
 from app.models.user import User
 from app.services.leave_service import leave_service
+from app.schemas.response import APIResponse
+from app.schemas.odoo import OdooLeave, OdooLeaveType, OdooLeaveAllocation
 
 router = APIRouter()
 
@@ -14,7 +16,7 @@ class LeaveRequestCreate(BaseModel):
     date_to: date
     description: str = ""
 
-@router.post("/request")
+@router.post("/request", response_model=APIResponse[dict])
 def create_request(
     request: LeaveRequestCreate,
     current_user: User = Depends(deps.get_current_user)
@@ -31,11 +33,11 @@ def create_request(
             request.date_to,
             request.description
         )
-        return {"msg": "Leave request created", "id": leave_id, "state": "draft"}
+        return APIResponse(data={"msg": "Leave request created", "id": leave_id, "state": "draft"})
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.post("/{leave_id}/confirm")
+@router.post("/{leave_id}/confirm", response_model=APIResponse[dict])
 def confirm_request(
     leave_id: int,
     current_user: User = Depends(deps.get_current_user)
@@ -46,35 +48,37 @@ def confirm_request(
         
     try:
         leave_service.confirm_request(leave_id, current_user.odoo_employee_id)
-        return {"msg": "Leave request confirmed"}
+        return APIResponse(data={"msg": "Leave request confirmed"})
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.get("/history")
+@router.get("/history", response_model=APIResponse[List[OdooLeave]])
 def get_history(
     current_user: User = Depends(deps.get_current_user)
 ):
     """Get leave history."""
     if not current_user.odoo_employee_id:
         raise HTTPException(status_code=400, detail="User not linked to Odoo Employee")
-    return leave_service.get_history(current_user.odoo_employee_id)
+    history = leave_service.get_history(current_user.odoo_employee_id)
+    return APIResponse(data=history)
 
-@router.get("/balance")
+@router.get("/balance", response_model=APIResponse[List[OdooLeaveAllocation]])
 def get_balance(
     current_user: User = Depends(deps.get_current_user)
 ):
     """Get leave balances."""
     if not current_user.odoo_employee_id:
         raise HTTPException(status_code=400, detail="User not linked to Odoo Employee")
-    return leave_service.get_balance(current_user.odoo_employee_id)
-    return leave_service.get_balance(current_user.odoo_employee_id)
+    balance = leave_service.get_balance(current_user.odoo_employee_id)
+    return APIResponse(data=balance)
 
-@router.get("/types")
+@router.get("/types", response_model=APIResponse[List[OdooLeaveType]])
 def get_leave_types(current_user: User = Depends(deps.get_current_user)):
     """Get available leave types."""
-    return leave_service.get_leave_types()
+    types = leave_service.get_leave_types()
+    return APIResponse(data=types)
 
-@router.post("/{leave_id}/approve")
+@router.post("/{leave_id}/approve", response_model=APIResponse[dict])
 def approve_request(
     leave_id: int,
     current_user: User = Depends(deps.get_current_user)
@@ -85,11 +89,11 @@ def approve_request(
         
     try:
         leave_service.approve_request(leave_id)
-        return {"msg": "Leave approved"}
+        return APIResponse(data={"msg": "Leave approved"})
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.post("/{leave_id}/reject")
+@router.post("/{leave_id}/reject", response_model=APIResponse[dict])
 def reject_request(
     leave_id: int,
     current_user: User = Depends(deps.get_current_user)
@@ -100,11 +104,11 @@ def reject_request(
         
     try:
         leave_service.reject_request(leave_id)
-        return {"msg": "Leave rejected"}
+        return APIResponse(data={"msg": "Leave rejected"})
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.get("/pending")
+@router.get("/pending", response_model=APIResponse[List[OdooLeave]])
 def get_pending_requests(
     current_user: User = Depends(deps.get_current_user)
 ):
@@ -115,4 +119,5 @@ def get_pending_requests(
     if not current_user.odoo_employee_id:
         raise HTTPException(status_code=400, detail="User not linked to Odoo Employee")
         
-    return leave_service.get_pending_requests(current_user.odoo_employee_id)
+    pending = leave_service.get_pending_requests(current_user.odoo_employee_id)
+    return APIResponse(data=pending)
