@@ -67,6 +67,11 @@ Trái tim của ứng dụng. Chứa toàn bộ logic xử lý nghiệp vụ. Co
 - **`user.py`**: Login, Create, Response schemas, UserUpdate.
 - **`token.py`**: JWT Token schemas.
 - **`odoo.py`**: Schemas cho dữ liệu Odoo (`OdooEmployee`, `OdooAttendance`).
+- **`attendance.py`**: Schemas chấm công (`AttendanceCheckIn`, `AttendanceStatus`, `AttendanceSummary`).
+- **`leave.py`**: Schemas nghỉ phép (`LeaveRequestCreate`).
+- **`profile.py`**: Schemas cập nhật hồ sơ (`ProfileUpdate`).
+- **`common.py`**: Các schema dùng chung (`ActionResponse` cho các action thành công/thất bại).
+- **`response.py`**: Generic Wrapper `APIResponse` chuẩn hóa toàn bộ phản hồi API.
 
 ### 5. `app/core/` (Core Utilities)
 
