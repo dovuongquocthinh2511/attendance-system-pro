@@ -5,7 +5,7 @@ from typing import Optional
 
 from app.models.user import User
 from app.models.token_blacklist import TokenBlacklist
-from app.schemas.token import Token
+from app.schemas.token import TokenResponse
 from app.core import security
 
 class AuthService:
@@ -27,7 +27,7 @@ class AuthService:
             return None
         return user
 
-    def login(self, db: Session, username: str, password: str) -> Token:
+    def login(self, db: Session, username: str, password: str) -> TokenResponse:
         """
         Full login flow: authenticate and generate token.
         Raises HTTPException if authentication fails.
@@ -60,7 +60,7 @@ class AuthService:
             db.add(db_token)
             db.commit()
 
-    def refresh_token(self, current_user: User) -> Token:
+    def refresh_token(self, current_user: User) -> TokenResponse:
         """
         Generate new access token for current user.
         """

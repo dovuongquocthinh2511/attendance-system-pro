@@ -1,7 +1,7 @@
 from pydantic import BaseModel  
 from typing import Optional
 
-class Token(BaseModel):
+class TokenResponse(BaseModel):
     access_token: str
     token_type: str
     role: str
