@@ -5,7 +5,7 @@ from app.models.user import User
 from app.services.profile_service import profile_service
 from app.schemas.response import APIResponse
 from app.schemas.odoo import OdooEmployee, OdooContract
-from app.schemas.profile import ProfileUpdate
+from app.schemas.profile import ProfileUpdateRequest
 from app.schemas.common import ActionResponse
 
 router = APIRouter()
@@ -21,7 +21,7 @@ def get_my_profile(current_user: User = Depends(deps.get_current_user)):
 
 @router.put("/", response_model=APIResponse[ActionResponse])
 def update_my_profile(
-    updates: ProfileUpdate,
+    updates: ProfileUpdateRequest,
     current_user: User = Depends(deps.get_current_user)
 ):
     """

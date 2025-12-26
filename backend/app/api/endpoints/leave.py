@@ -5,14 +5,14 @@ from app.models.user import User
 from app.services.leave_service import leave_service
 from app.schemas.response import APIResponse
 from app.schemas.odoo import OdooLeave, OdooLeaveType, OdooLeaveAllocation
-from app.schemas.leave import LeaveRequestCreate
+from app.schemas.leave import LeaveCreateRequest
 from app.schemas.common import ActionResponse
 
 router = APIRouter()
 
 @router.post("/request", response_model=APIResponse[ActionResponse])
 def create_request(
-    request: LeaveRequestCreate,
+    request: LeaveCreateRequest,
     current_user: User = Depends(deps.get_current_user)
 ):
     """Create a drafted leave request."""

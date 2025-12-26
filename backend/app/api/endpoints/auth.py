@@ -4,7 +4,7 @@ from fastapi.security import OAuth2PasswordBearer
 
 from app.api import deps
 from app.models.user import User
-from app.schemas.user import UserLogin
+from app.schemas.user import LoginRequest
 from app.schemas.token import Token
 from app.services.auth_service import auth_service
 from app.schemas.response import APIResponse
@@ -15,7 +15,7 @@ router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 @router.post("/login", response_model=APIResponse[Token])
-def login(user_in: UserLogin, db: Session = Depends(deps.get_db)):
+def login(user_in: LoginRequest, db: Session = Depends(deps.get_db)):
     token = auth_service.login(db=db, username=user_in.username, password=user_in.password)
     return APIResponse(data=token)
 

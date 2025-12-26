@@ -7,18 +7,18 @@ class AttendanceBase(BaseModel):
     ip_address: Optional[str] = None
     mode: Optional[str] = "manual"
 
-class AttendanceCheckIn(AttendanceBase):
+class CheckInRequest(AttendanceBase):
     pass
 
-class AttendanceCheckOut(AttendanceBase):
+class CheckOutRequest(AttendanceBase):
     pass
 
-class AttendanceStatus(BaseModel):
+class AttendanceStatusResponse(BaseModel):
     is_checked_in: bool
     check_in_time: Optional[str] = None
     record_id: Optional[int] = None
 
-class AttendanceSummary(BaseModel):
+class AttendanceSummaryResponse(BaseModel):
     month: int
     year: int
     total_hours: float

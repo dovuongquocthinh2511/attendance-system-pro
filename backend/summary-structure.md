@@ -64,12 +64,12 @@ Trái tim của ứng dụng. Chứa toàn bộ logic xử lý nghiệp vụ. Co
 
 Định nghĩa cấu trúc dữ liệu Input/Output (Pydantic Models).
 
-- **`user.py`**: Login, Create, Response schemas, UserUpdate.
+- **`user.py`**: User Schemas (`LoginRequest`, `UserCreateRequest`, `UserDetailResponse`, `UserUpdateRequest`).
 - **`token.py`**: JWT Token schemas.
 - **`odoo.py`**: Schemas cho dữ liệu Odoo (`OdooEmployee`, `OdooAttendance`).
-- **`attendance.py`**: Schemas chấm công (`AttendanceCheckIn`, `AttendanceStatus`, `AttendanceSummary`).
-- **`leave.py`**: Schemas nghỉ phép (`LeaveRequestCreate`).
-- **`profile.py`**: Schemas cập nhật hồ sơ (`ProfileUpdate`).
+- **`attendance.py`**: Schemas chấm công (`CheckInRequest`, `CheckOutRequest`, `AttendanceStatusResponse`, `AttendanceSummaryResponse`).
+- **`leave.py`**: Schemas nghỉ phép (`LeaveCreateRequest`).
+- **`profile.py`**: Schemas cập nhật hồ sơ (`ProfileUpdateRequest`).
 - **`common.py`**: Các schema dùng chung (`ActionResponse` cho các action thành công/thất bại).
 - **`response.py`**: Generic Wrapper `APIResponse` chuẩn hóa toàn bộ phản hồi API.
 
