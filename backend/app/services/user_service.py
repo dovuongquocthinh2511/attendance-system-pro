@@ -2,12 +2,12 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from typing import List, Optional, Dict
 from app.models.user import User
-from app.schemas.user import UserCreate, UserUpdate
+from app.schemas.user import UserCreateRequest, UserUpdateRequest
 from app.core import security
 from app.services.odoo_client import odoo_client
 
 class UserService:
-    def create_user(self, db: Session, user_in: UserCreate) -> User:
+    def create_user(self, db: Session, user_in: UserCreateRequest) -> User:
         """
         Create a new user.
         Checks for existing email/phone.
@@ -42,7 +42,7 @@ class UserService:
     def get_user_by_id(self, db: Session, user_id: int) -> Optional[User]:
         return db.query(User).filter(User.id == user_id).first()
 
-    def update_user(self, db: Session, user_id: int, user_in: UserUpdate) -> User:
+    def update_user(self, db: Session, user_id: int, user_in: UserUpdateRequest) -> User:
         user = self.get_user_by_id(db, user_id)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")

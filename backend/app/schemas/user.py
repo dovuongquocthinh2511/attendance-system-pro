@@ -11,11 +11,11 @@ class UserBase(BaseModel):
     is_active: Optional[bool] = True
 
 # Properties to receive via API on creation
-class UserCreate(UserBase):
+class UserCreateRequest(UserBase):
     password: str
 
 # Properties to receive via API on update
-class UserUpdate(BaseModel):
+class UserUpdateRequest(BaseModel):
     email: Optional[EmailStr] = None
     phone: Optional[str] = None
     password: Optional[str] = None
@@ -24,7 +24,7 @@ class UserUpdate(BaseModel):
     is_active: Optional[bool] = None
 
 # Properties to return via API
-class UserResponse(BaseModel):
+class UserDetailResponse(BaseModel):
     id: int
     email: EmailStr
     phone: Optional[str] = None
@@ -38,6 +38,6 @@ class UserResponse(BaseModel):
         from_attributes = True
 
 # Login schema
-class UserLogin(BaseModel):
+class LoginRequest(BaseModel):
     username: str
     password: str

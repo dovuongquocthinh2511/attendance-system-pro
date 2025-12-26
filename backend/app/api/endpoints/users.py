@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 from app.api import deps
-from app.schemas.user import UserCreate, UserResponse, UserUpdate
+from app.schemas.user import UserCreateRequest, UserDetailResponse, UserUpdateRequest
 from app.services.user_service import user_service
 from app.models.user import User
 from app.schemas.response import APIResponse
@@ -11,19 +11,20 @@ router = APIRouter()
 
 # --- ADMIN ENDPOINTS ---
 
-@router.post("/", response_model=UserResponse)
+@router.post("/", response_model=APIResponse[UserDetailResponse])
 def create_user(
-    user_in: UserCreate,
+    user_in: UserCreateRequest,
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user)
 ):
     """Admin create user."""
     if current_user.role != 'admin':
         raise HTTPException(status_code=403, detail="Not authorized")
-    return user_service.create_user(db, user_in)
+    user = user_service.create_user(db, user_in)
+    return APIResponse(data=user)
 
 
-@router.get("/", response_model=APIResponse[List[UserResponse]])
+@router.get("/", response_model=APIResponse[List[UserDetailResponse]])
 def read_users(
     skip: int = 0,
     limit: int = 100,
@@ -36,19 +37,20 @@ def read_users(
     users = user_service.get_users(db, skip, limit)
     return APIResponse(data=users)
 
-@router.put("/{user_id}", response_model=UserResponse)
+@router.put("/{user_id}", response_model=APIResponse[UserDetailResponse])
 def update_user(
     user_id: int,
-    user_in: UserUpdate,
+    user_in: UserUpdateRequest,
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user)
 ):
     """Admin update user."""
     if current_user.role != 'admin':
          raise HTTPException(status_code=403, detail="Not authorized")
-    return user_service.update_user(db, user_id, user_in)
+    user = user_service.update_user(db, user_id, user_in)
+    return APIResponse(data=user)
 
-@router.delete("/{user_id}", response_model=UserResponse)
+@router.delete("/{user_id}", response_model=APIResponse[UserDetailResponse])
 def delete_user(
     user_id: int,
     db: Session = Depends(deps.get_db),
@@ -57,7 +59,8 @@ def delete_user(
     """Admin delete user."""
     if current_user.role != 'admin':
          raise HTTPException(status_code=403, detail="Not authorized")
-    return user_service.delete_user(db, user_id)
+    user = user_service.delete_user(db, user_id)
+    return APIResponse(data=user)
 
 # --- MANAGER ENDPOINTS ---
 
