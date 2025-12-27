@@ -51,7 +51,7 @@ def check_in(
             ip_address=data.ip_address,
             mode=data.mode
         )
-        return APIResponse(data=ActionResponse(msg="Checked in successfully", id=attendance_id))
+        return APIResponse(data=ActionResponse(msg="Checked in successfully", id=attendance_id, state="checked_in"))
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -70,14 +70,14 @@ def check_out(
         raise HTTPException(status_code=400, detail="User not linked to Odoo Employee")
         
     try:
-        attendance_service.check_out(
+        attendance_id = attendance_service.check_out(
             odoo_employee_id=current_user.odoo_employee_id,
             latitude=data.latitude,
             longitude=data.longitude,
             ip_address=data.ip_address,
             mode=data.mode
         )
-        return APIResponse(data=ActionResponse(msg="Checked out successfully"))
+        return APIResponse(data=ActionResponse(msg="Checked out successfully", id=attendance_id, state="checked_out"))
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:

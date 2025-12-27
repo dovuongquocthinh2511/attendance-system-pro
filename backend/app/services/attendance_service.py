@@ -58,7 +58,7 @@ class AttendanceService:
         longitude: Optional[float] = None,
         ip_address: Optional[str] = None,
         mode: Optional[str] = "manual"
-    ) -> bool:
+    ) -> int:
         """
         Update the open attendance record (Check Out).
         Includes metadata: GPS, IP, Mode.
@@ -81,10 +81,10 @@ class AttendanceService:
         }
 
         try:
-            success = odoo_client.execute_kw(
+            odoo_client.execute_kw(
                 'hr.attendance', 'write', [[attendance_id], vals]
             )
-            return success
+            return attendance_id
         except Exception as e:
             raise OdooAPIError(f"Failed to check out: {str(e)}")
 

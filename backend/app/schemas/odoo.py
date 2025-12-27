@@ -38,7 +38,7 @@ class OdooLeave(BaseModel):
 class OdooLeaveType(BaseModel):
     id: int
     name: str
-    allocation_type: Optional[str] = None
+    allocation_validation_type: Optional[str] = None
 
 class OdooLeaveAllocation(BaseModel):
     id: int

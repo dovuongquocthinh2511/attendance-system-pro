@@ -37,8 +37,8 @@ def update_my_profile(
         
         success = profile_service.update_profile(current_user.odoo_employee_id, update_data)
         if success:
-             return APIResponse(data=ActionResponse(msg="Profile updated successfully"))
-        return APIResponse(data=ActionResponse(msg="No changes made or invalid fields"))
+             return APIResponse(data=ActionResponse(msg="Profile updated successfully", id=current_user.odoo_employee_id, state="updated"))
+        return APIResponse(data=ActionResponse(msg="No changes made or invalid fields", id=current_user.odoo_employee_id, state="no_change"))
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 

@@ -6,3 +6,10 @@ class LeaveCreateRequest(BaseModel):
     date_from: date
     date_to: date
     description: str = ""
+
+class LeaveBalanceResponse(BaseModel):
+    type_id: int
+    name: str
+    remaining: float
+    allocated: float
+    taken: float

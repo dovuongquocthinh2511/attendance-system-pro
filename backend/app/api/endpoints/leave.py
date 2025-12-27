@@ -4,8 +4,8 @@ from app.api import deps
 from app.models.user import User
 from app.services.leave_service import leave_service
 from app.schemas.response import APIResponse
-from app.schemas.odoo import OdooLeave, OdooLeaveType, OdooLeaveAllocation
-from app.schemas.leave import LeaveCreateRequest
+from app.schemas.odoo import OdooLeave, OdooLeaveType
+from app.schemas.leave import LeaveCreateRequest, LeaveBalanceResponse
 from app.schemas.common import ActionResponse
 
 router = APIRouter()
@@ -41,8 +41,8 @@ def confirm_request(
         raise HTTPException(status_code=400, detail="User not linked to Odoo Employee")
         
     try:
-        leave_service.confirm_request(leave_id, current_user.odoo_employee_id)
-        return APIResponse(data=ActionResponse(msg="Leave request confirmed"))
+        new_state = leave_service.confirm_request(leave_id, current_user.odoo_employee_id)
+        return APIResponse(data=ActionResponse(msg="Leave request confirmed", id=leave_id, state=new_state))
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -56,7 +56,7 @@ def get_history(
     history = leave_service.get_history(current_user.odoo_employee_id)
     return APIResponse(data=history)
 
-@router.get("/balance", response_model=APIResponse[List[OdooLeaveAllocation]])
+@router.get("/balance", response_model=APIResponse[List[LeaveBalanceResponse]])
 def get_balance(
     current_user: User = Depends(deps.get_current_user)
 ):
@@ -82,8 +82,8 @@ def approve_request(
         raise HTTPException(status_code=403, detail="Not authorized")
         
     try:
-        leave_service.approve_request(leave_id)
-        return APIResponse(data=ActionResponse(msg="Leave approved"))
+        new_state = leave_service.approve_request(leave_id)
+        return APIResponse(data=ActionResponse(msg="Leave approved", id=leave_id, state=new_state))
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -97,8 +97,8 @@ def reject_request(
         raise HTTPException(status_code=403, detail="Not authorized")
         
     try:
-        leave_service.reject_request(leave_id)
-        return APIResponse(data=ActionResponse(msg="Leave rejected"))
+        new_state = leave_service.reject_request(leave_id)
+        return APIResponse(data=ActionResponse(msg="Leave rejected", id=leave_id, state=new_state))
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
