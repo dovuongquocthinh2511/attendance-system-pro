@@ -1,5 +1,5 @@
-from pydantic import BaseModel, Field
-from typing import Optional, List, Union
+from pydantic import BaseModel, Field, model_validator
+from typing import Optional, List, Union, Any
 from datetime import datetime, date
 
 # Generic Odoo Many2one field type: [id, "Name"] or False/None
@@ -17,6 +17,17 @@ class OdooEmployee(BaseModel):
     parent_id: OdooM2O = None
     birthday: Optional[date] = None
     identification_id: Optional[str] = None
+
+    @model_validator(mode='before')
+    @classmethod
+    def parse_odoo_false(cls, data: Any) -> Any:
+        """Convert Odoo's False values to None for all fields."""
+        if isinstance(data, dict):
+            return {
+                k: (None if v is False else v) 
+                for k, v in data.items()
+            }
+        return data
 
 class OdooAttendance(BaseModel):
     id: int
@@ -58,3 +69,15 @@ class OdooContract(BaseModel):
     date_end: Optional[date] = None
     job_id: OdooM2O = None
     department_id: OdooM2O = None
+
+    @model_validator(mode='before')
+    @classmethod
+    def parse_odoo_false(cls, data: Any) -> Any:
+        # Re-use validator logic or import a base class. 
+        # For simplicity, duplicate concise logic here to keep modules independent if no base class exists yet.
+        if isinstance(data, dict):
+            return {
+                k: (None if v is False else v) 
+                for k, v in data.items()
+            }
+        return data

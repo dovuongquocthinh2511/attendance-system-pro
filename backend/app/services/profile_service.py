@@ -40,7 +40,7 @@ class ProfileService:
             ['state', 'in', ['open', 'close', 'draft']] 
         ]
         # Sort by date_start desc to get latest
-        fields = ['id', 'name', 'wage', 'state', 'date_start', 'date_end', 'job_id', 'department_id']
+        fields = ['id', 'name', 'wage', 'state', 'date_start', 'date_end', 'job_id', 'department_id', 'employee_id']
         records = odoo_client.search_read('hr.contract', domain, fields, order='date_start desc', limit=1)
         return records[0] if records else {}
 

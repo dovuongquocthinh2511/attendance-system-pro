@@ -7,6 +7,39 @@ from app.core import security
 from app.services.odoo_client import odoo_client
 
 class UserService:
+    def _find_odoo_employee(self, email: str = None, phone: str = None) -> Optional[int]:
+        """
+        Find Odoo employee by Email OR Phone (Mobile/Work).
+        """
+        if not email and not phone:
+            return None
+            
+        domain = []
+        # Match Work Email
+        if email:
+            domain.append(['work_email', '=', email])
+            
+        # Match Mobile or Work Phone
+        if phone:
+            domain.append(['mobile_phone', '=', phone])
+            domain.append(['work_phone', '=', phone])
+            
+        if not domain:
+            return None
+            
+        # Prefix notation for ORs: ['|', '|', A, B, C]
+        final_domain = []
+        if len(domain) > 1:
+            final_domain = ['|'] * (len(domain) - 1)
+        final_domain.extend(domain)
+        
+        try:
+            employees = odoo_client.search_read('hr.employee', final_domain, ['id'], limit=1)
+            return employees[0]['id'] if employees else None
+        except Exception as e:
+            print(f"Error searching Odoo employee: {e}")
+            return None
+
     def create_user(self, db: Session, user_in: UserCreateRequest) -> User:
         """
         Create a new user.
@@ -21,13 +54,19 @@ class UserService:
         if user_in.phone and db.query(User).filter(User.phone == user_in.phone).first():
             raise HTTPException(status_code=400, detail="Phone number already registered")
 
+        odoo_employee_id = user_in.odoo_employee_id
+        
+        # Auto-link with Odoo Employee if not provided
+        if not odoo_employee_id:
+            odoo_employee_id = self._find_odoo_employee(user_in.email, user_in.phone)
+
         # Create user object
         user = User(
             email=user_in.email,
             phone=user_in.phone,
             password_hash=security.hash_password(user_in.password),
             role=user_in.role,
-            odoo_employee_id=user_in.odoo_employee_id,
+            odoo_employee_id=odoo_employee_id,
             is_active=user_in.is_active
         )
         
@@ -37,7 +76,7 @@ class UserService:
         return user
 
     def get_users(self, db: Session, skip: int = 0, limit: int = 100) -> List[User]:
-        return db.query(User).offset(skip).limit(limit).all()
+        return db.query(User).order_by(User.created_at.desc()).offset(skip).limit(limit).all()
 
     def get_user_by_id(self, db: Session, user_id: int) -> Optional[User]:
         return db.query(User).filter(User.id == user_id).first()
@@ -48,6 +87,24 @@ class UserService:
             raise HTTPException(status_code=404, detail="User not found")
             
         update_data = user_in.dict(exclude_unset=True)
+        
+        # Auto-link logic on Email or Phone change
+        # If odoo_employee_id is explicitly passed, respect it.
+        # Otherwise, if Email OR Phone changed, re-evaluate link.
+        if 'odoo_employee_id' not in update_data:
+            new_email = update_data.get('email')
+            new_phone = update_data.get('phone')
+            
+            # Use new values if changed, else use existing values
+            final_email = new_email if new_email is not None else user.email
+            final_phone = new_phone if new_phone is not None else user.phone
+            
+            # Only re-sync if one of them actually changed
+            if new_email is not None or new_phone is not None:
+                found_id = self._find_odoo_employee(final_email, final_phone)
+                # If found, update. If not found, set to None (unlink).
+                update_data['odoo_employee_id'] = found_id
+
         if 'password' in update_data:
             hashed_password = security.hash_password(update_data['password'])
             update_data['password_hash'] = hashed_password
