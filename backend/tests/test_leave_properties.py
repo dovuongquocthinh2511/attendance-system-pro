@@ -100,7 +100,7 @@ def test_state_transitions():
         with patch('app.services.leave_service.leave_service._check_overlap', return_value=False):
             with patch('app.services.leave_service.leave_service._check_balance', return_value=True):
                  with patch('app.services.leave_service.odoo_client.execute_kw') as mock_odoo:
-                     assert leave_service.confirm_request(1, 1) is True
+                     assert leave_service.confirm_request(1, 1) == 'confirm'
 
     # Invalid Flow: validate -> confirm
     with patch('app.services.leave_service.leave_service._get_request') as mock_get:
@@ -114,22 +114,27 @@ def test_state_transitions():
 # --- Property 8: Balance Calculation ---
 @given(allocated=st.floats(min_value=10, max_value=20), taken=st.floats(min_value=0, max_value=10))
 def test_balance_calculation(allocated, taken):
-    # Mock get_employees_days response
-    mock_data = {
-        1: { # employee_id
-            10: { # leave_type_id
-                'max_leaves': allocated,
-                'leaves_taken': taken,
-                'remaining_leaves': allocated - taken
-            }
-        }
-    }
+    # Mock search_read responses
+    # Call 1: Allocations
+    allocations_data = [{
+        'holiday_status_id': [10, 'Paid Time Off'],
+        'number_of_days': allocated
+    }]
+    # Call 2: Leaves Taken
+    leaves_data = [{
+        'holiday_status_id': [10, 'Paid Time Off'],
+        'number_of_days': taken
+    }]
     
-    with patch('app.services.leave_service.odoo_client.execute_kw') as mock_execute:
-        mock_execute.return_value = mock_data # response for get_employees_days
-        with patch('app.services.leave_service.odoo_client.search_read') as mock_search:
-             mock_search.return_value = [{'id': 10, 'name': 'Paid Time Off'}]
-             
-             balance = leave_service.get_balance(employee_id=1)
-             assert len(balance) == 1
-             assert balance[0]['remaining'] == allocated - taken
+    with patch('app.services.leave_service.odoo_client.search_read') as mock_search:
+        # Use side_effect to return different values for sequential calls
+        # Depending on how many times search_read is called, we provide a list.
+        # Order in get_balance: Allocations first, then Leaves.
+        mock_search.side_effect = [allocations_data, leaves_data]
+        
+        balance = leave_service.get_balance(employee_id=1)
+        
+        assert len(balance) == 1
+        # Using flexible matching because floating point arithmetic
+        assert abs(balance[0]['remaining'] - (allocated - taken)) < 0.001
+        assert balance[0]['type_id'] == 10

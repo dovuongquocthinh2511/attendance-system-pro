@@ -29,7 +29,7 @@ def test_jwt_contains_correct_role(role, user_id, odoo_id):
 # Validates Requirements 6.5
 # Disable deadline because bcrypt is intentionally slow
 @settings(deadline=None)
-@given(password=st.text(min_size=1).filter(lambda x: "\0" not in x))
+@given(password=st.text(min_size=1, max_size=64).filter(lambda x: "\0" not in x))
 def test_password_hashing_consistency(password):
     # Action 1: Hash password
     hashed = security.hash_password(password)

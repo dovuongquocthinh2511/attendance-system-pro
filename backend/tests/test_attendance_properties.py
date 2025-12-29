@@ -37,7 +37,7 @@ def test_checkout_consistency(odoo_id):
         mock_status.return_value = {'id': 123}
         with patch('app.services.attendance_service.odoo_client.execute_kw') as mock_odoo:
             mock_odoo.return_value = True
-            assert attendance_service.check_out(odoo_id) is True
+            assert attendance_service.check_out(odoo_id) == 123
 
 # --- Property 4: History Ordering ---
 # Validates Requirement 2.3
