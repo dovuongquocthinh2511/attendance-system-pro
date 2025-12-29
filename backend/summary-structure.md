@@ -32,7 +32,7 @@ Nơi tiếp nhận request từ Client, validate input cơ bản và gọi xuố
 
 - **`endpoints/`**:
   - `auth.py`: Các API login, logout, refresh token.
-  - `users.py`: Các API tạo mới, lấy danh sách user.
+  - `users.py`: Các API tạo mới, lấy danh sách user, lấy team.
   - `attendance.py`: Các API Check-in/out, xem lịch sử, tổng hợp công.
   - `leave.py`: Các API xin nghỉ phép, duyệt đơn, xem phép tồn.
   - `profile.py`: Các API xem/sửa profile, hợp đồng.
@@ -45,7 +45,7 @@ Nơi tiếp nhận request từ Client, validate input cơ bản và gọi xuố
 
 Trái tim của ứng dụng. Chứa toàn bộ logic xử lý nghiệp vụ. Controller (API) chỉ việc gọi hàm trong đây.
 
-- **`user_service.py`**: Logic User (create, validation, get_team).
+- **`user_service.py`**: Logic User (CRUD, Hash pass, Auto-link Odoo Employee).
 - **`auth_service.py`**: Logic Auth (login, logout, token gen, blacklist).
 - **`odoo_client.py`**: Service kết nối và giao tiếp XML-RPC với Odoo ERP.
 - **`employee_service.py`**: Service xử lý logic Employee, validate ID với Odoo.
