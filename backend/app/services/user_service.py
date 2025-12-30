@@ -5,40 +5,9 @@ from app.models.user import User
 from app.schemas.user import UserCreateRequest, UserUpdateRequest
 from app.core import security
 from app.services.odoo_client import odoo_client
+from app.services.employee_service import employee_service
 
 class UserService:
-    def _find_odoo_employee(self, email: str = None, phone: str = None) -> Optional[int]:
-        """
-        Find Odoo employee by Email OR Phone (Mobile/Work).
-        """
-        if not email and not phone:
-            return None
-            
-        domain = []
-        # Match Work Email
-        if email:
-            domain.append(['work_email', '=', email])
-            
-        # Match Mobile or Work Phone
-        if phone:
-            domain.append(['mobile_phone', '=', phone])
-            domain.append(['work_phone', '=', phone])
-            
-        if not domain:
-            return None
-            
-        # Prefix notation for ORs: ['|', '|', A, B, C]
-        final_domain = []
-        if len(domain) > 1:
-            final_domain = ['|'] * (len(domain) - 1)
-        final_domain.extend(domain)
-        
-        try:
-            employees = odoo_client.search_read('hr.employee', final_domain, ['id'], limit=1)
-            return employees[0]['id'] if employees else None
-        except Exception as e:
-            print(f"Error searching Odoo employee: {e}")
-            return None
 
     def create_user(self, db: Session, user_in: UserCreateRequest) -> User:
         """
@@ -58,7 +27,7 @@ class UserService:
         
         # Auto-link with Odoo Employee if not provided
         if not odoo_employee_id:
-            odoo_employee_id = self._find_odoo_employee(user_in.email, user_in.phone)
+            odoo_employee_id = employee_service.find_by_email_or_phone(user_in.email, user_in.phone)
 
         # Create user object
         user = User(
@@ -101,7 +70,7 @@ class UserService:
             
             # Only re-sync if one of them actually changed
             if new_email is not None or new_phone is not None:
-                found_id = self._find_odoo_employee(final_email, final_phone)
+                found_id = employee_service.find_by_email_or_phone(final_email, final_phone)
                 # If found, update. If not found, set to None (unlink).
                 update_data['odoo_employee_id'] = found_id
 

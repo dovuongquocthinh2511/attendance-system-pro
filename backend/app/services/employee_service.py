@@ -25,4 +25,37 @@ class EmployeeService:
             print(f"Error validating Odoo Employee ID: {e}")
             return False
 
+    def find_by_email_or_phone(self, email: str = None, phone: str = None) -> Optional[int]:
+        """
+        Find Odoo employee by Email OR Phone (Mobile/Work).
+        """
+        if not email and not phone:
+            return None
+            
+        domain = []
+        # Match Work Email
+        if email:
+            domain.append(['work_email', '=', email])
+            
+        # Match Mobile or Work Phone
+        if phone:
+            domain.append(['mobile_phone', '=', phone])
+            domain.append(['work_phone', '=', phone])
+            
+        if not domain:
+            return None
+            
+        # Prefix notation for ORs: ['|', '|', A, B, C]
+        final_domain = []
+        if len(domain) > 1:
+            final_domain = ['|'] * (len(domain) - 1)
+        final_domain.extend(domain)
+        
+        try:
+            employees = odoo_client.search_read('hr.employee', final_domain, ['id'], limit=1)
+            return employees[0]['id'] if employees else None
+        except Exception as e:
+            print(f"Error searching Odoo employee: {e}")
+            return None
+
 employee_service = EmployeeService()
