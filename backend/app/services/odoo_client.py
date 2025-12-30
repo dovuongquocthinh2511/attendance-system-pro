@@ -1,5 +1,6 @@
 import xmlrpc.client
 from typing import Any, List, Optional
+from app.core.logger import logger
 from app.core.config import settings
 from app.core.exceptions import OdooConnectionError, OdooAPIError, AuthenticationError
 
@@ -29,7 +30,7 @@ class OdooClient:
                 raise AuthenticationError(f"Authentication failed for user {self.username}")
                 
             self.models = xmlrpc.client.ServerProxy(f'{self.url}/xmlrpc/2/object')
-            print(f"--- Đã kết nối Odoo thành công! UID: {self.uid} ---")
+            logger.info(f"--- Connected to Odoo successfully! UID: {self.uid} ---")
             
         except ConnectionRefusedError:
              raise OdooConnectionError(f"Could not connect to Odoo at {self.url}")

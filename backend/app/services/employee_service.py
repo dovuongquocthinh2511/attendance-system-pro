@@ -1,5 +1,6 @@
 from typing import Optional
 from app.services.odoo_client import odoo_client
+from app.core.logger import logger
 
 class EmployeeService:
     def validate_odoo_employee_id(self, odoo_employee_id: int) -> bool:
@@ -22,7 +23,7 @@ class EmployeeService:
         except Exception as e:
             # If connection fails or other error, we assume validation failed (safety)
             # Or we could log it. For now, return False.
-            print(f"Error validating Odoo Employee ID: {e}")
+            logger.error(f"Error validating Odoo Employee ID: {e}")
             return False
 
     def find_by_email_or_phone(self, email: str = None, phone: str = None) -> Optional[int]:
@@ -55,7 +56,7 @@ class EmployeeService:
             employees = odoo_client.search_read('hr.employee', final_domain, ['id'], limit=1)
             return employees[0]['id'] if employees else None
         except Exception as e:
-            print(f"Error searching Odoo employee: {e}")
+            logger.error(f"Error searching Odoo employee: {e}")
             return None
 
 employee_service = EmployeeService()

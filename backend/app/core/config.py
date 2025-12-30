@@ -19,6 +19,10 @@ class Settings(BaseSettings):
     ODOO_USERNAME: str = os.getenv("ODOO_USERNAME", "admin")
     ODOO_PASSWORD: str = os.getenv("ODOO_PASSWORD", "odoo")
 
+    # Initial Admin Config
+    FIRST_SUPERUSER_EMAIL: str = os.getenv("FIRST_SUPERUSER_EMAIL", "admin@bestmix.vn")
+    FIRST_SUPERUSER_PASSWORD: str = os.getenv("FIRST_SUPERUSER_PASSWORD", "123456")
+
     class Config:
         case_sensitive = True
         env_file = ".env"

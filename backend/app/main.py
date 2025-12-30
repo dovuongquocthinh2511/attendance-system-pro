@@ -6,24 +6,29 @@ from sqlalchemy.orm import Session
 
 from app.core.database import engine, SessionLocal, Base
 from app.api.endpoints import auth, users, attendance, leave, profile
-from app.core.security import hash_password
+from app.core import security
 from app.models.user import User
 from app.core.exceptions import BestmixException
+from app.core.logger import logger
+from app.core.config import settings
 
 def create_initial_data(db: Session):
-    admin_user = db.query(User).filter(User.email == "admin@bestmix.vn").first()
+    admin_email = settings.FIRST_SUPERUSER_EMAIL
+    admin_password = settings.FIRST_SUPERUSER_PASSWORD
+    
+    admin_user = db.query(User).filter(User.email == admin_email).first()
     if not admin_user:
-        print("--- KHỞI TẠO TÀI KHOẢN ADMIN MẶC ĐỊNH ---")
+        logger.info("--- INITIALIZING DEFAULT ADMIN ACCOUNT ---")
         user = User(
-            email="admin@bestmix.vn",
-            password_hash=hash_password("123456"), # Pass mặc định
+            email=admin_email,
+            password_hash=security.hash_password(admin_password),
             role="admin",
-            odoo_employee_id=1, # Giả sử ID bên Odoo là 1
+            odoo_employee_id=1, # Assumption: ID 1 in Odoo
             is_active=True
         )
         db.add(user)
         db.commit()
-        print("--- ĐÃ TẠO USER: admin@bestmix.vn / 123456 ---")
+        logger.info(f"--- CREATED ADMIN USER: {admin_email} ---")
 
 # Hàm lifespan: Chạy 1 lần khi Server khởi động (Startup)
 @asynccontextmanager

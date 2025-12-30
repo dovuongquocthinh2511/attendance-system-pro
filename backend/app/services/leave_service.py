@@ -2,6 +2,7 @@ from datetime import date, datetime
 from typing import List, Optional, Dict, Any
 from app.services.odoo_client import odoo_client
 from app.core.exceptions import OdooAPIError, LeaveOverlapError, AuthorizationError, NotFoundError
+from app.core.logger import logger
 
 class LeaveService:
     def create_request(self, employee_id: int, leave_type_id: int, date_from: date, date_to: date, description: str = "") -> int:
@@ -135,7 +136,7 @@ class LeaveService:
 
         except Exception as e:
             # Log specific error if needed, but for API safety we return empty list or re-raise if critical
-            print(f"Error calculating balance: {e}") # Simple logging
+            logger.error(f"Error calculating balance: {e}") # Simple logging
             return []
 
     def get_leave_types(self) -> List[Dict]:
