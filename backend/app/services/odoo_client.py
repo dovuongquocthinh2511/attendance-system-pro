@@ -22,6 +22,11 @@ class OdooClient:
         if self.uid:
             return  # Already connected and authenticated
 
+        logger.info(f"Connecting to Odoo: URL={self.url}, DB={self.db}, User={self.username}")
+
+        if not self.db:
+             raise OdooConnectionError("Odoo Database name (ODOO_DB) is not configured.")
+
         try:
             self.common = xmlrpc.client.ServerProxy(f'{self.url}/xmlrpc/2/common')
             self.uid = self.common.authenticate(self.db, self.username, self.password, {})
