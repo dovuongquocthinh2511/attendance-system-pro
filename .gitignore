@@ -1,0 +1,31 @@
+# Ignore python cache files
+__pycache__
+*.pyc
+
+# Ignore virtual environment
+venv
+.env
+
+# Ignore database files
+database.db
+
+# Ignore logs
+*.log
+
+# Ignore IDE files
+.idea
+.vscode
+
+# Ignore temporary files
+*~
+
+# Ignore docker files
+docker-compose.yml
+Dockerfile
+
+# Ignore summary structure file
+summary-structure.md
+
+# Ignore hypothesis
+.hypothesis/
+
