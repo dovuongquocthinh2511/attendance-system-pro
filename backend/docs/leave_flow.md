@@ -1,83 +1,144 @@
-# Giải thích Luồng Nghỉ phép (Leave Flow)
+# Giải thích Luồng Nghỉ Phép (Leave Flow)
 
-Tài liệu này mô tả quy trình tạo đơn, duyệt đơn và quản lý phép trong hệ thống **Bestmix Pro**.
+Tài liệu này phân tích chi tiết mã nguồn của **`LeaveService`** (`backend/app/services/leave_service.py`), bao gồm quy trình tạo đơn, duyệt đơn và logic kiểm tra phép tồn (Leave Balance).
 
-## Vòng đời Đơn nghỉ phép (State Lifecycle)
+## 1. Tổng quan & Trạng thái (State)
 
-Đơn nghỉ phép trong Odoo (`hr.leave`) trải qua các trạng thái sau:
+Quy trình nghỉ phép trong Odoo đi qua các trạng thái sau:
 
-1.  **Draft** (`draft`): Mới tạo, chưa gửi đi.
-2.  **Confirmed** (`confirm`): Đã gửi, chờ duyệt (Pending).
-3.  **Validated** (`validate`): Đã được duyệt (Approved).
-4.  **Refused** (`refuse`): Bị từ chối (Rejected).
+```mermaid
+stateDiagram-v2
+    [*] --> Draft: create_request()
+    Draft --> Confirm: confirm_request()\n(Kiểm tra Overlap & Balance)
+    Confirm --> Validate: approve_request()\n(Manager)
+    Confirm --> Refuse: reject_request()\n(Manager)
+    Validate --> [*]
+    Refuse --> [*]
+```
+
+- **Draft (Nháp)**: Đơn mới tạo, chưa gửi đi.
+- **Confirm (Chờ duyệt)**: Đã gửi, chờ quản lý duyệt. **Đây là bước kiểm tra logic quan trọng nhất.**
+- **Validate (Đã duyệt)**: Đơn đã được chấp nhận, ngày phép chính thức bị trừ.
+- **Refuse (Từ chối)**: Đơn bị hủy.
 
 ---
 
-## 1. Tạo & Gửi Đơn
+## 2. Tạo & Gửi đơn (`create_request` & `confirm_request`)
 
-### Sơ đồ luồng dữ liệu
+Đây là 2 bước tách biệt để cho phép user sửa đổi trước khi gửi chốt.
+
+### Sơ đồ Logic (Gửi đơn)
 
 ```mermaid
-graph TD
-    User[Mobile App] -->|1. Create Draft| Service[Leave Service]
-    Service -->|2. Validate Dates| Logic{Valid Dates?}
-    Logic -->|No| Error[Error Response]
-    Logic -->|Yes| Odoo1[Odoo: Create]
-
-    User -->|3. Confirm (Send)| Service
-    Service -->|4. Check Overlap| Check1{Overlap?}
-    Check1 -->|Yes| Error
-    Check1 -->|No| Check2{Balance Enough?}
-    Check2 -->|No| Error
-    Check2 -->|Yes| Odoo2[Odoo: Action Confirm]
+flowchart TD
+    A[API: confirm_request(leave_id)] --> B{Kiểm tra Quyền}
+    B -- Sai User --> C[Raise AuthorizationError]
+    B -- Đúng --> D{Kiểm tra State}
+    D -- Không phải Draft --> E[Raise Error]
+    D -- Draft --> F{Check Overlap}
+    F -- Trùng ngày --> G[Raise LeaveOverlapError]
+    F -- OK --> H{Check Balance}
+    H -- Hết phép --> I[Raise InsufficientBalance]
+    H -- OK --> K[Odoo: action_confirm()]
+    K --> L[Return 'confirm']
 ```
 
-### Chi tiết xử lý (`LeaveService`)
+### Chi tiết Code
 
 #### A. Tạo Nháp (`create_request`)
 
-1.  **Validate Ngày**: Đảm bảo `date_to >= date_from` và không chọn ngày trong quá khứ.
-2.  **Tạo Record**: Gọi Odoo `create` trên model `hr.leave`. Trạng thái mặc định là `draft`.
+```python
+vals = {
+    'employee_id': employee_id,
+    'holiday_status_id': leave_type_id, # Loại nghỉ (Phép năm, Ốm...)
+    'request_date_from': date_from,
+    'request_date_to': date_to,
+    'name': description
+}
+odoo_client.execute_kw('hr.leave', 'create', [vals])
+```
 
-#### B. Gửi Đơn (`confirm_request`)
+- Chỉ đơn giản là tạo bản ghi, chưa kiểm tra logic nghiệp vụ sâu.
 
-Hàm này chuyển trạng thái từ `draft` -> `confirm`. Trước khi chuyển, hệ thống thực hiện các kiểm tra quan trọng:
+#### B. Gửi xác nhận (`confirm_request`) - **Logic Phức tạp**
 
-1.  **Check Overlap (Trùng lịch)**:
-    - Hàm `_check_overlap`: Query Odoo xem có đơn nào đã duyệt (`validate`) hoặc đang chờ (`confirm`) nằm trong khoảng thời gian này không.
-    - Nếu có -> Chặn ngay lập tức.
-2.  **Check Balance (Số dư phép)**:
+1.  **Kiểm tra Trùng lặp (`_check_overlap`)**:
 
-    - Hàm `_check_balance`: Gọi Odoo (hoặc tự tính) để kiểm tra số ngày phép còn lại (`remaining_leaves`) của loại nghỉ phép đó (`holiday_status_id`).
-    - Nếu số dư < số ngày xin nghỉ -> Báo lỗi.
+    - Mục đích: Không cho phép tạo đơn mới nếu ngày xin nghỉ chồng lấn lên một đơn _đã gửi_ hoặc _đã duyệt_ khác.
+    - **Query Odoo**:
+      ```python
+      domain = [
+          ['employee_id', '=', employee_id],
+          ['state', 'in', ['confirm', 'validate', 'validate1']],
+          ['request_date_from', '<=', date_to], # Logic giao nhau
+          ['request_date_to', '>=', date_from]
+      ]
+      ```
+    - Nếu `count > 0` -> Báo lỗi `LeaveOverlapError`.
 
-3.  **Action Confirm**:
-    - Nếu tất cả hợp lệ, gọi method `action_confirm` của Odoo model để chuyển trạng thái.
+2.  **Kiểm tra Số dư phép (`_check_balance`)**:
+
+    - Mục đích: Không cho nghỉ lố số ngày được cấp.
+    - **Logic**:
+      - Gọi phương thức Odoo `get_employees_days` (nếu có hỗ trợ) để lấy số ngày còn lại của loại nghỉ đó.
+      - So sánh: `remaining_leaves >= request.number_of_days`.
+    - Nếu thiếu -> Báo lỗi `OdooAPIError("Insufficient leave balance")`.
+
+3.  **Chuyển trạng thái**:
+    - Gọi method `action_confirm` của Odoo để chuyển đơn sang trạng thái chờ duyệt.
 
 ---
 
-## 2. Quản lý Phép (Duyệt/Từ chối)
+## 3. Quản lý Duyệt/Từ chối
 
-Các hành động này dành cho Manager/Admin:
+Dành cho role Manager.
 
-- **Approve**: Gọi method `action_validate` trên Odoo. Đơn chuyển sang trạng thái `validate`. Ngày phép sẽ chính thức bị trừ.
-- **Reject**: Gọi method `action_refuse`. Đơn chuyển sang trạng thái `refuse`. Ngày phép (nếu đã trừ tạm) sẽ được hoàn lại.
+- **Duyệt (`approve_request`)**:
+
+  ```python
+  odoo_client.execute_kw('hr.leave', 'action_validate', [[leave_id]])
+  ```
+
+  - Chuyển trạng thái sang `validate`. Lúc này ngày phép mới thực sự bị trừ vào quỹ phép (Allocated Days).
+
+- **Từ chối (`reject_request`)**:
+  ```python
+  odoo_client.execute_kw('hr.leave', 'action_refuse', [[leave_id]])
+  ```
+  - Chuyển sang `refuse`.
 
 ---
 
-## 3. Tra cứu Số dư (`get_balance`)
+## 4. Kiểm tra Phép tồn (`get_balance`)
 
-Đây là chức năng phức tạp nhất do cần tổng hợp dữ liệu từ Odoo.
+Đây là hàm **khó nhất** vì quy định tính phép của Odoo khá phức tạp và thay đổi theo version. Service này đang cài đặt logic **tính toán thủ công** để đảm bảo hoạt động được trên nhiều môi trường.
 
-### Logic tính toán
+**Công thức**: `Remaining = Allocated (Được cấp) - Taken (Đã dùng)`
 
-Do API Odoo có thể không expose trực tiếp phương thức lấy số dư dễ dàng, Service thực hiện tính toán thủ công (`LeaveService.get_balance`):
+### Logic Code
 
-1.  **Lấy Phân bổ (Allocation)**:
-    - Query `hr.leave.allocation`: Lấy tổng số ngày phép được cấp cho nhân viên theo từng loại (`holiday_status_id`).
-2.  **Lấy Đã dùng (Taken)**:
-    - Query `hr.leave`: Lấy tổng số ngày phép của các đơn đã duyệt (`validate`) hoặc đang chờ (`confirm`).
-3.  **Tính toán**:
-    - `Remaining` (Còn lại) = `Allocated` (Được cấp) - `Taken` (Đã dùng).
-4.  **Kết quả**:
-    - Trả về danh sách các loại phép kèm theo số liệu: _Tổng, Đã dùng, Còn lại_.
+1.  **Lấy Tổng Cấp (`Allocated`)**:
+
+    - Query bảng `hr.leave.allocation`.
+    - Điều kiện: [`state`, `=`, `validate`] (Chỉ tính đơn cấp phép đã duyệt).
+    - Cộng dồn `number_of_days` theo từng loại nghỉ (`holiday_status_id`).
+
+2.  **Lấy Tổng Dùng (`Taken`)**:
+
+    - Query bảng `hr.leave`.
+    - Điều kiện: [`state`, `in`, `['confirm', 'validate', 'validate1']`].
+    - **Lưu ý**: Tính cả đơn _Đang chờ duyệt_ (`confirm`) vào số đã dùng để tránh trường hợp user spam đơn liên tục vượt quá quỹ phép trước khi manager kịp duyệt.
+
+3.  **Tổng hợp**:
+    - Loop qua 2 danh sách trên và trừ ra số dư cuối cùng.
+
+```python
+result = []
+for type_id in all_types:
+    remaining = allocated[type_id] - taken[type_id]
+    result.append({
+        'name': type_name,
+        'remaining': remaining,
+        ...
+    })
+```
