@@ -2,7 +2,65 @@
 
 Tài liệu này phân tích chi tiết mã nguồn của **`LeaveService`** (`backend/app/services/leave_service.py`), bao gồm quy trình tạo đơn, duyệt đơn và logic kiểm tra phép tồn (Leave Balance).
 
-## 1. Tổng quan & Trạng thái (State)
+---
+
+## 1. Sơ đồ Tiếp nhận Yêu cầu (Request Flow)
+
+Trước khi đi vào các trạng thái và logic xử lý, hãy xem cách một yêu cầu tạo đơn nghỉ phép đi qua hệ thống.
+
+### Sơ đồ Tổng quan
+
+```mermaid
+sequenceDiagram
+    participant Client as Mobile App
+    participant API as API Layer (/leave)
+    participant Service as Leave Service
+    participant Odoo as Odoo XML-RPC
+
+    Note over Client, API: Header: Authorization: Bearer <token>
+
+    Client->>API: POST /leave/request (Date, Type...)
+
+    API->>API: Verify JWT & Get Current User
+
+    API->>Service: create_request(user_id, data...)
+    Service->>Odoo: create('hr.leave')
+    Odoo-->>Service: Return ID
+    Service-->>API: Return Success (Draft)
+    API-->>Client: 200 OK (JSON)
+```
+
+### Chi tiết các bước
+
+#### Bước 1: Client gửi Request
+
+- Mobile App gửi POST `/leave/request` kèm `access_token`.
+- Body chứa `date_from`, `date_to`, `leave_type_id`, `description`.
+
+#### Bước 2: API Layer (`backend/app/api/endpoints/leave.py`)
+
+- Endpoint `create_request` đảm nhận việc này.
+
+```python
+@router.post("/request", response_model=APIResponse[ActionResponse])
+def create_request(
+    request: LeaveCreateRequest,
+    current_user: User = Depends(deps.get_current_user)
+):
+    if not current_user.odoo_employee_id:
+        raise HTTPException(status_code=400, detail="User not linked to Odoo Employee")
+
+    leave_id = leave_service.create_request(
+        current_user.odoo_employee_id,
+        request.leave_type_id,
+        ...
+    )
+    return APIResponse(data=ActionResponse(msg="Leave request created", id=leave_id, state="draft"))
+```
+
+---
+
+## 2. Tổng quan & Trạng thái (State)
 
 Quy trình nghỉ phép trong Odoo đi qua các trạng thái sau:
 

@@ -8,6 +8,67 @@ Khác với Attendance hay Leave, service này chủ yếu làm nhiệm vụ **R
 
 ---
 
+---
+
+## 1. Sơ đồ Tiếp nhận Yêu cầu (Request Flow)
+
+Trước khi đi vào logic whitelist và đồng bộ, hãy xem luồng xử lý của một yêu cầu cập nhật hồ sơ.
+
+### Sơ đồ Tổng quan
+
+```mermaid
+sequenceDiagram
+    participant Client as Mobile App
+    participant API as API Layer (/profile)
+    participant Service as Profile Service
+    participant Odoo as Odoo XML-RPC
+
+    Note over Client, API: Header: Authorization: Bearer <token>
+
+    Client->>API: PUT /profile (email, phone...)
+
+    API->>API: Verify JWT & Get Current User
+
+    API->>Service: update_profile(user_id, updates)
+
+    Service->>Service: Filter Whitelist (Security)
+
+    Service->>Odoo: write('hr.employee', updates)
+    Odoo-->>Service: True
+    Service-->>API: Return Success
+    API-->>Client: 200 OK (JSON)
+```
+
+### Chi tiết các bước
+
+#### Bước 1: Client gửi Request
+
+- Mobile App gửi PUT request kèm `access_token`.
+- Body chứa các field muốn sửa (ví dụ: `mobile_phone`, `birthday`...).
+
+#### Bước 2: API Layer (`backend/app/api/endpoints/profile.py`)
+
+- Endpoint `update_my_profile` tiếp nhận.
+
+```python
+@router.put("/", response_model=APIResponse[ActionResponse])
+def update_my_profile(
+    updates: ProfileUpdateRequest,
+    current_user: User = Depends(deps.get_current_user)
+):
+    if not current_user.odoo_employee_id:
+        raise HTTPException(status_code=400, detail="User not linked to Odoo Employee")
+
+    update_data = updates.dict(exclude_unset=True)
+    success = profile_service.update_profile(current_user.odoo_employee_id, update_data)
+
+    if success:
+         return APIResponse(data=ActionResponse(msg="Profile updated successfully", ...))
+    return APIResponse(data=ActionResponse(msg="No changes made", ...))
+```
+
+---
+
 ## 2. Cập nhật Hồ sơ (`update_profile`)
 
 Đây là tính năng quan trọng nhất cần kiểm soát bảo mật.

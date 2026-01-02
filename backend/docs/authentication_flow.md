@@ -1,4 +1,4 @@
-# Giải thích Luồng Xác thục (Authentication Flow)
+# Giải thích Luồng Xác thực (Authentication Flow)
 
 Tài liệu này giải thích chi tiết cơ chế đăng nhập của hệ thống **Bestmix Pro**, đi từ lúc ứng dụng Mobile gửi yêu cầu cho đến khi nhận được kết quả.
 

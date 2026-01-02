@@ -2,9 +2,73 @@
 
 Tài liệu này phân tích chi tiết mã nguồn của **`AttendanceService`** (`backend/app/services/attendance_service.py`), giải thích cách hệ thống xử lý logic chấm công và đồng bộ dữ liệu với Odoo.
 
-## 1. Class `AttendanceService`
+---
 
-Class này đóng vai trò Facade pattern, che giấu sự phức tạp của việc gọi API Odoo (XML-RPC), cung cấp các phương thức nghiệp vụ dễ hiểu cho API Layer.
+## 1. Sơ đồ Tiếp nhận Yêu cầu (Request Flow)
+
+Trước khi đi vào logic chi tiết của từng hàm, hãy xem cách một request đi từ Mobile App đến Service.
+
+### Sơ đồ Tổng quan
+
+```mermaid
+sequenceDiagram
+    participant Client as Mobile App
+    participant API as API Layer (/attendance)
+    participant Service as Attendance Service
+    participant Odoo as Odoo XML-RPC
+
+    Note over Client, API: Header: Authorization: Bearer <token>
+
+    Client->>API: POST /check-in (GPS, IP)
+
+    API->>API: Verify JWT & Get Current User
+    alt Invalid Token
+        API-->>Client: 401 Unauthorized
+    end
+
+    API->>Service: check_in(employee_id, GPS...)
+    Service->>Odoo: create('hr.attendance')
+    Odoo-->>Service: Return ID
+    Service-->>API: Return Success
+    API-->>Client: 200 OK (JSON)
+```
+
+### Chi tiết các bước
+
+#### Bước 1: Client gửi Request
+
+- Mobile App gửi POST request kèm `access_token` trong Header.
+- Body chứa thông tin `latitude`, `longitude`, `ip_address`.
+
+#### Bước 2: API Layer (`backend/app/api/endpoints/attendance.py`)
+
+- Endpoint `check_in` tiếp nhận request.
+- `Depends(deps.get_current_user)`: Tự động giải mã Token, lấy thông tin User đang đăng nhập.
+
+```python
+@router.post("/check-in", response_model=APIResponse[ActionResponse])
+def check_in(
+    data: CheckInRequest,
+    current_user: User = Depends(deps.get_current_user)
+):
+    # Validate: User phải đã liên kết với nhân viên Odoo
+    if not current_user.odoo_employee_id:
+        raise HTTPException(status_code=400, detail="User not linked to Odoo Employee")
+
+    # Gọi Service
+    attendance_id = attendance_service.check_in(
+        odoo_employee_id=current_user.odoo_employee_id,
+        latitude=data.latitude,
+        ...
+    )
+    return APIResponse(data=ActionResponse(msg="Checked in successfully", ...))
+```
+
+---
+
+## 2. Chi tiết Logic Service (`AttendanceService`)
+
+Class này đóng vai trò Facade pattern, che giấu sự phức tạp của việc gọi API Odoo (XML-RPC).
 
 ### Các hàm chính:
 

@@ -2,7 +2,65 @@
 
 Tài liệu này phân tích chi tiết mã nguồn của **`UserService`** (`backend/app/services/user_service.py`). Khác với 3 service còn lại, service này hoạt động chủ yếu trên **Local Database (PostgreSQL)** để quản lý tài khoản đăng nhập, nhưng có cơ chế **Auto-link** đặc biệt để kết nối với Odoo.
 
-## 1. Cơ chế Tự động Liên kết (Auto-linking)
+---
+
+## 1. Sơ đồ Tiếp nhận Yêu cầu (Request Flow)
+
+Luồng tạo User mới (thường dành cho Admin) có thêm bước kiểm tra quyền hạn (RBAC).
+
+### Sơ đồ Tổng quan
+
+```mermaid
+sequenceDiagram
+    participant Client as Admin App
+    participant API as API Layer (/users)
+    participant Service as User Service
+    participant DB as Local DB
+
+    Note over Client, API: Header: Authorization: Bearer <token>
+
+    Client->>API: POST /users (email, phone, role...)
+
+    API->>API: Verify JWT & Check Role='admin'
+    alt Not Admin
+        API-->>Client: 403 Forbidden
+    end
+
+    API->>Service: create_user(db, data)
+    Service->>DB: Insert User
+    DB-->>Service: User Obj
+    Service-->>API: Return User
+    API-->>Client: 200 OK (JSON)
+```
+
+### Chi tiết các bước
+
+#### Bước 1: Client gửi Request
+
+- Admin gửi POST `/users` để tạo tài khoản cho nhân viên mới.
+
+#### Bước 2: API Layer (`backend/app/api/endpoints/users.py`)
+
+- Endpoint `create_user` tiếp nhận và kiểm tra quyền Admin.
+
+```python
+@router.post("/", response_model=APIResponse[UserDetailResponse])
+def create_user(
+    user_in: UserCreateRequest,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user)
+):
+    # Security: Chỉ Admin mới được tạo user
+    if current_user.role != 'admin':
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    user = user_service.create_user(db, user_in)
+    return APIResponse(data=user)
+```
+
+---
+
+## 2. Cơ chế Tự động Liên kết (Auto-linking)
 
 Hệ thống Bestmix Pro cho phép tạo user local trước, sau đó tự động tìm và map với nhân viên trong Odoo dựa trên Email hoặc SĐT.
 
