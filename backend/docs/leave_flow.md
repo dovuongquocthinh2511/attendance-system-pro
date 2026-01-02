@@ -30,17 +30,35 @@ stateDiagram-v2
 ### Sơ đồ Logic (Gửi đơn)
 
 ```mermaid
-flowchart TD
-    A[API: confirm_request(leave_id)] --> B{Kiểm tra Quyền}
-    B -- Sai User --> C[Raise AuthorizationError]
-    B -- Đúng --> D{Kiểm tra State}
-    D -- Không phải Draft --> E[Raise Error]
-    D -- Draft --> F{Check Overlap}
-    F -- Trùng ngày --> G[Raise LeaveOverlapError]
-    F -- OK --> H{Check Balance}
-    H -- Hết phép --> I[Raise InsufficientBalance]
-    H -- OK --> K[Odoo: action_confirm()]
-    K --> L[Return 'confirm']
+sequenceDiagram
+    participant API as API confirm_request
+    participant Service as Leave Service
+    participant Odoo as Odoo XML-RPC
+
+    API->>Service: confirm_request(leave_id, user_id)
+
+    Service->>Service: _get_request(leave_id)
+    alt Request not found
+        Service-->>API: Raise NotFoundError
+    else User != Owner
+        Service-->>API: Raise AuthorizationError
+    end
+
+    Service->>Service: Check State (must be 'draft')
+
+    Service->>Service: _check_overlap()
+    alt Overlap Detected
+        Service-->>API: Raise LeaveOverlapError
+    end
+
+    Service->>Service: _check_balance()
+    alt Insufficient Balance
+        Service-->>API: Raise InsufficientBalance
+    end
+
+    Service->>Odoo: action_confirm([leave_id])
+    Odoo-->>Service: Success
+    Service-->>API: Return 'confirm'
 ```
 
 ### Chi tiết Code
@@ -142,3 +160,37 @@ for type_id in all_types:
         ...
     })
 ```
+
+---
+
+## 5. Các hàm bổ trợ khác
+
+### A. Lấy lịch sử nghỉ phép (`get_history`)
+
+```python
+def get_history(self, employee_id: int, limit: int = 20) -> List[Dict]:
+    domain = [['employee_id', '=', employee_id]]
+    return odoo_client.search_read('hr.leave', domain, ..., order='request_date_from desc')
+```
+
+- Lấy danh sách đơn nghỉ phép của nhân viên, sắp xếp ngày mới nhất lên đầu.
+
+### B. Lấy loại nghỉ phép (`get_leave_types`)
+
+```python
+def get_leave_types(self) -> List[Dict]:
+    return odoo_client.search_read('hr.leave.type', [], ['id', 'name', 'allocation_validation_type'])
+```
+
+- Lấy danh sách các loại nghỉ (Phép năm, Ốm, Việc riêng...) để hiển thị trong dropdown khi tạo đơn.
+
+### C. Lấy đơn chờ duyệt (`get_pending_requests`)
+
+```python
+def get_pending_requests(self, manager_employee_id: int) -> List[Dict]:
+    # Hiện tại đang lấy tất cả đơn có state='confirm'
+    domain = [['state', '=', 'confirm']]
+    return odoo_client.search_read('hr.leave', domain, ...)
+```
+
+- **Lưu ý**: Logic hiện tại đang lấy **toàn bộ** đơn chờ duyệt trong hệ thống. Cần cải tiến để chỉ lấy đơn của nhân viên cấp dưới (`department_id` hoặc `parent_id`) trong tương lai.

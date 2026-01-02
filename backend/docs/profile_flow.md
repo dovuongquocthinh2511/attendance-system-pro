@@ -15,12 +15,22 @@ Khác với Attendance hay Leave, service này chủ yếu làm nhiệm vụ **R
 ### Sơ đồ Logic
 
 ```mermaid
-flowchart TD
-    A[API: update_profile(data)] --> B[Lọc theo Whitelist]
-    B --> C{Còn field nào không?}
-    C -- Không/Rỗng --> D[Return False (Ignore)]
-    C -- Còn dữ liệu --> E[Odoo: write('hr.employee', updates)]
-    E --> F[Return True/False]
+sequenceDiagram
+    participant API as API update_profile
+    participant Service as Profile Service
+    participant Odoo as Odoo XML-RPC
+
+    API->>Service: update_profile(data)
+
+    Service->>Service: Filter Whitelist (Email, Phone...)
+
+    alt No valid fields
+        Service-->>API: Return False (Ignore)
+    else Valid Data Exists
+        Service->>Odoo: write([id], updates)
+        Odoo-->>Service: Success
+        Service-->>API: Return True
+    end
 ```
 
 ### Chi tiết Code

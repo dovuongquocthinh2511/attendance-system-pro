@@ -22,13 +22,22 @@ Hàm này xử lý việc nhân viên bắt đầu ca làm việc.
 ### Sơ đồ Logic
 
 ```mermaid
-flowchart TD
-    A[API call check_in()] --> B{Gọi get_status()}
-    B -- Có bản ghi mở --> C[Raise DuplicateCheckinError]
-    B -- Không có --> D[Chuẩn bị Vals]
-    D --> E[Odoo: create('hr.attendance', vals)]
-    E --> F[Return new ID]
-    C --> G[API trả lỗi 400]
+sequenceDiagram
+    participant API as API check_in
+    participant Service as Attendance Service
+    participant Odoo as Odoo XML-RPC
+
+    API->>Service: check_in(GPS, IP, Mode)
+
+    Service->>Service: get_status(employee_id)
+    alt Already Checked In
+        Service-->>API: Raise DuplicateCheckinError
+    end
+
+    Service->>Service: Prepare Vals (GPS, IP)
+    Service->>Odoo: create('hr.attendance', vals)
+    Odoo-->>Service: new_attendance_id
+    Service-->>API: Return new ID
 ```
 
 ### Chi tiết Code
@@ -78,13 +87,22 @@ Hàm này cập nhật giờ ra cho bản ghi đang mở.
 ### Sơ đồ Logic
 
 ```mermaid
-flowchart TD
-    A[API call check_out()] --> B{Gọi get_status()}
-    B -- Không tìm thấy --> C[Raise NotFoundError]
-    B -- Có bản ghi (ID=123) --> D[Chuẩn bị Vals]
-    D --> E[Odoo: write(123, vals)]
-    E --> F[Return ID]
-    C --> G[API trả lỗi 404]
+sequenceDiagram
+    participant API as API check_out
+    participant Service as Attendance Service
+    participant Odoo as Odoo XML-RPC
+
+    API->>Service: check_out(GPS, IP)
+
+    Service->>Service: get_status(employee_id)
+    alt Not Checked In
+        Service-->>API: Raise NotFoundError
+    else Found Session (ID=123)
+        Service->>Service: Prepare Vals (Time, GPS)
+        Service->>Odoo: write([123], vals)
+        Odoo-->>Service: True
+        Service-->>API: Return ID
+    end
 ```
 
 ### Chi tiết Code
@@ -170,3 +188,22 @@ Do Odoo 18.0 có thể không có sẵn hàm tính tổng qua API, service này 
     total_hours = sum(r.get('worked_hours', 0.0) for r in records)
     ```
     - Cộng dồn giá trị `worked_hours` (số thực) mà Odoo đã tính sẵn cho từng dòng.
+
+---
+
+## 6. Lấy Lịch sử (`get_history`)
+
+```python
+def get_history(self, odoo_employee_id: int, limit: int = 30) -> List[dict]:
+    domain = [['employee_id', '=', odoo_employee_id]]
+    return odoo_client.execute_kw(
+        'hr.attendance', 'search_read', [domain],
+        {'fields': ['check_in', 'check_out', 'worked_hours'], 'limit': limit, 'order': 'check_in desc'}
+    )
+```
+
+- **Mục đích**: Lấy danh sách chấm công để hiển thị lên App.
+- **Logic**:
+  - **Filter**: Chỉ lấy của nhân viên đó.
+  - **Order**: `check_in desc` (Mới nhất lên đầu) để nhân viên thấy ngày hôm nay trước.
+  - **Limit**: Mặc định 30 dòng (khoảng 1 tháng làm việc) để tối ưu tốc độ load.
