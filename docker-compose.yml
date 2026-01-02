@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  # Service 1: Database Local (Chứa user/pass login)
+  db:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=bestmix_user
+      - POSTGRES_PASSWORD=bestmix_pass
+      - POSTGRES_DB=bestmix_auth_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"  
+
+  # Service 2: Backend API
+  backend:
+    build: 
+      context: ./backend  
+    container_name: bestmix_backend
+    volumes:
+      - ./backend:/app    
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://bestmix_user:bestmix_pass@db/bestmix_auth_db
+      - SECRET_KEY=chuoi_bi_mat_sieu_dai
+      - ACCESS_TOKEN_EXPIRE_MINUTES=60
+      - PYTHONUNBUFFERED=1
+      - ODOO_URL=http://host.docker.internal:8069
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:

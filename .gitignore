@@ -22,9 +22,6 @@ database.db
 # Ignore summary structure file
 #summary-structure.md
 
-# Ignore docker files
-docker-compose.yml
-Dockerfile
 
 # Ignore hypothesis
 .hypothesis/
