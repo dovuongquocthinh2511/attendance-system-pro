@@ -106,10 +106,28 @@ def login(self, db: Session, username: str, password: str) -> TokenResponse:
 
 Các hàm tiện ích được Service gọi đến:
 
-- **`verify_password(plain, hashed)`**: Dùng thư viện `passlib[bcrypt]` để băm mật khẩu người dùng nhập vào và so sánh với chuỗi hash trong DB. **Tuyệt đối không so sánh chuỗi plain text trực tiếp.**
-- **`create_access_token(data)`**: Dùng thư viện `python-jose` để tạo chuỗi JWT.
-  - **Payload**: Chứa `sub` (user id), `role` (quyền hạn), `odoo_employee_id` (mã nhân viên Odoo).
-  - **Signature**: Được ký bằng `SECRET_KEY` của server để đảm bảo không ai có thể làm giả token này.
+- **`verify_password`**: Dùng thư viện `passlib[bcrypt]` để so sánh mật khẩu.
+
+  ```python
+  def verify_password(plain_password: str, hashed_password: str) -> bool:
+      return pwd_context.verify(plain_password, hashed_password)
+  ```
+
+- **`create_access_token`**: Tạo chuỗi JWT với thời gian hết hạn (`exp`) và secret key.
+  ```python
+  def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+      to_encode = data.copy()
+      if expires_delta:
+          expire = datetime.utcnow() + expires_delta
+      else:
+          expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+
+      to_encode.update({"exp": expire})
+      encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+      return encoded_jwt
+  ```
+  - **Payload**: Chứa `sub` (user id), `role`, `odoo_employee_id`.
+  - **Signature**: Ký bằng `SECRET_KEY` + `ALGORITHM` (HS256).
 
 ### 5. Phản hồi về Client
 
