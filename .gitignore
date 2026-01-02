@@ -26,6 +26,4 @@ database.db
 # Ignore hypothesis
 .hypothesis/
 
-# Ignore docs
-/docs
 
