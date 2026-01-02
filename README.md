@@ -1,10 +1,10 @@
-# Bestmix-Pro
+# Attendance System Pro
 
-Bestmix Pro là hệ thống quản lý nhân sự nội bộ với kiến trúc 3-tier với mục đích giúp cho nhân viên thực hiện việc chấm công, xin nghỉ phép, quản lý hồ sơ nhân viên
+Attendance System Pro là hệ thống quản lý nhân sự nội bộ với kiến trúc 3-tier với mục đích giúp cho nhân viên thực hiện việc chấm công, xin nghỉ phép, quản lý hồ sơ nhân viên
 
 ## 📖 Giới thiệu
 
-**Bestmix Pro** là hệ thống quản lý nhân sự nội bộ (HRM) được thiết kế hiện đại với kiến trúc 3-tier, giúp tối ưu hóa quy trình chấm công, nghỉ phép và quản lý hồ sơ nhân viên.
+**Attendance System Pro** là hệ thống quản lý nhân sự nội bộ (HRM) được thiết kế hiện đại với kiến trúc 3-tier, giúp tối ưu hóa quy trình chấm công, nghỉ phép và quản lý hồ sơ nhân viên.
 
 Dự án đóng vai trò là cầu nối thông minh gữa người dùng và hệ thống Odoo ERP, giúp nhân viên thao tác nhanh chóng trên giao diện Mobile-first PWA mà không cần truy cập trực tiếp vào Odoo.
 
