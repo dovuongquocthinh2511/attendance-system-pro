@@ -1,10 +1,10 @@
-# Attendance System Pro
+# Bestmix-Pro
 
-Đây là hệ thống quản lý nhân sự nội bộ với kiến trúc 3-tier với mục đích giúp cho nhân viên thực hiện việc chấm công, xin nghỉ phép, quản lý hồ sơ nhân viên
+Bestmix Pro là hệ thống quản lý nhân sự nội bộ với kiến trúc 3-tier với mục đích giúp cho nhân viên thực hiện việc chấm công, xin nghỉ phép, quản lý hồ sơ nhân viên
 
 ## 📖 Giới thiệu
 
-**Attendance System Pro** là hệ thống quản lý nhân sự nội bộ (HRM) được thiết kế hiện đại với kiến trúc 3-tier, giúp tối ưu hóa quy trình chấm công, nghỉ phép và quản lý hồ sơ nhân viên.
+**Bestmix Pro** là hệ thống quản lý nhân sự nội bộ (HRM) được thiết kế hiện đại với kiến trúc 3-tier, giúp tối ưu hóa quy trình chấm công, nghỉ phép và quản lý hồ sơ nhân viên.
 
 Dự án đóng vai trò là cầu nối thông minh gữa người dùng và hệ thống Odoo ERP, giúp nhân viên thao tác nhanh chóng trên giao diện Mobile-first PWA mà không cần truy cập trực tiếp vào Odoo.
 
@@ -115,6 +115,33 @@ _Lưu ý: Bạn cần tự cài đặt và chạy PostgreSQL nếu chạy thủ 
 ```bash
 uvicorn app.main:app --reload
 ```
+
+#### 2. Khởi chạy Backend bằng Conda (Tùy chọn)
+
+Nếu bạn sử dụng Anaconda hoặc Miniconda:
+
+**Bước 1: Tạo môi trường**
+
+```bash
+conda create --name bestmix-env python=3.10
+```
+
+**Bước 2: Kích hoạt môi trường**
+
+```bash
+conda activate bestmix-env
+```
+
+**Bước 3: Cài đặt thư viện**
+
+```bash
+pip install -r requirements.txt
+```
+
+_Lưu ý: Nên dùng `pip` trong môi trường conda để đảm bảo tương thích tốt nhất với `requirements.txt` hiện có._
+
+**Bước 4: Cấu hình và Chạy**
+Thực hiện tương tự như **Bước 4** và **Bước 5** của phần hướng dẫn venv ở trên.
 
 #### 2. Khởi chạy Frontend
 
