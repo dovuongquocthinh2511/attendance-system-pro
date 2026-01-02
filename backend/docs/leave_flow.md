@@ -194,3 +194,52 @@ def get_pending_requests(self, manager_employee_id: int) -> List[Dict]:
 ```
 
 - **Lưu ý**: Logic hiện tại đang lấy **toàn bộ** đơn chờ duyệt trong hệ thống. Cần cải tiến để chỉ lấy đơn của nhân viên cấp dưới (`department_id` hoặc `parent_id`) trong tương lai.
+
+### D. Các hàm Validate nội bộ (Internal Helpers)
+
+#### `_check_overlap`
+
+Kiểm tra xem khoảng thời gian nghỉ có bị trùng với đơn khác không.
+
+```python
+def _check_overlap(self, employee_id: int, date_from: date, date_to: date, exclude_id: int = None) -> bool:
+    domain = [
+        ['employee_id', '=', employee_id],
+        ['state', 'in', ['confirm', 'validate', 'validate1']],
+        ['request_date_from', '<=', date_to.strftime('%Y-%m-%d')],
+        ['request_date_to', '>=', date_from.strftime('%Y-%m-%d')]
+    ]
+    if exclude_id:
+        domain.append(['id', '!=', exclude_id])
+
+    count = odoo_client.execute_kw('hr.leave', 'search_count', [domain])
+    return count > 0
+```
+
+#### `_check_balance`
+
+Kiểm tra số dư phép bằng cách gọi hàm `get_employees_days` của Odoo (nếu có).
+
+```python
+def _check_balance(self, employee_id: int, type_id: int, days_needed: float) -> bool:
+     try:
+        allocations = odoo_client.execute_kw('hr.leave', 'get_employees_days', [[employee_id]])
+        if not allocations or employee_id not in allocations:
+            return False
+        type_data = allocations[employee_id].get(type_id)
+        return type_data and type_data.get('remaining_leaves', 0) >= days_needed
+     except:
+         return False
+```
+
+#### `_validate_dates`
+
+Kiểm tra ngày bắt đầu không được lớn hơn ngày kết thúc, và không được chọn ngày trong quá khứ.
+
+```python
+def _validate_dates(self, date_from: date, date_to: date):
+    if date_to < date_from:
+        raise OdooAPIError("End date must be greater than or equal to start date")
+    if date_from < date.today():
+         raise OdooAPIError("Start date cannot be in the past")
+```
