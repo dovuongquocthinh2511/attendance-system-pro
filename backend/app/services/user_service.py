@@ -50,7 +50,7 @@ class UserService:
     def get_user_by_id(self, db: Session, user_id: int) -> Optional[User]:
         return db.query(User).filter(User.id == user_id).first()
 
-    def update_user(self, db: Session, user_id: int, user_in: UserUpdateRequest) -> User:
+    def update_user(self, db: Session, user_id: int, user_in: UserUpdateRequest, allow_auto_link: bool = False) -> User:
         user = self.get_user_by_id(db, user_id)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
@@ -58,9 +58,8 @@ class UserService:
         update_data = user_in.dict(exclude_unset=True)
         
         # Auto-link logic on Email or Phone change
-        # If odoo_employee_id is explicitly passed, respect it.
-        # Otherwise, if Email OR Phone changed, re-evaluate link.
-        if 'odoo_employee_id' not in update_data:
+        # Only triggered if allow_auto_link is True
+        if allow_auto_link and 'odoo_employee_id' not in update_data:
             new_email = update_data.get('email')
             new_phone = update_data.get('phone')
             

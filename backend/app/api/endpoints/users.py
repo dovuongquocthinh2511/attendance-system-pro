@@ -47,7 +47,7 @@ def update_user(
     """Admin update user."""
     if current_user.role != 'admin':
          raise HTTPException(status_code=403, detail="Not authorized")
-    user = user_service.update_user(db, user_id, user_in)
+    user = user_service.update_user(db, user_id, user_in, allow_auto_link=True)
     return APIResponse(data=user)
 
 @router.delete("/{user_id}", response_model=APIResponse[UserDetailResponse])
