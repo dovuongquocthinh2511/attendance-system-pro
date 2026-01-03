@@ -121,18 +121,25 @@ sequenceDiagram
 
 #### B. Hàm `update_user` (Cập nhật User)
 
-Logic tương tự cũng được áp dụng khi cập nhật thông tin:
+Logic tương tự cũng được áp dụng khi cập nhật thông tin, nhưng **cần có cờ cho phép (`allow_auto_link`)**.
 
 ```python
-if 'odoo_employee_id' not in update_data:
-    # Nếu user đổi Email hoặc Phone
-    if new_email is not None or new_phone is not None:
-        # Hệ thống tự chạy lại logic tìm kiếm để update liên kết
-        found_id = employee_service.find_by_email_or_phone(final_email, final_phone)
-        update_data['odoo_employee_id'] = found_id
+def update_user(self, db: Session, user_id: int, user_in: UserUpdateRequest, allow_auto_link: bool = False) -> User:
+    # ...
+    # Auto-link logic on Email or Phone change
+    # Chỉ chạy logic này nếu allow_auto_link=True
+    if allow_auto_link and 'odoo_employee_id' not in update_data:
+        new_email = update_data.get('email')
+        new_phone = update_data.get('phone')
+
+        if new_email is not None or new_phone is not None:
+            # Hệ thống tìm kiếm lại để update liên kết
+            found_id = employee_service.find_by_email_or_phone(final_email, final_phone)
+            update_data['odoo_employee_id'] = found_id
 ```
 
-- **Ví dụ**: User A ban đầu dùng email cá nhân (chưa link được Odoo). Sau đó User A đổi sang email công ty. Hệ thống sẽ ngay lập tức tìm thấy nhân viên Odoo tương ứng và tự động cập nhật `odoo_employee_id` cho User A.
+- **Thay đổi quan trọng**: Mặc định `allow_auto_link = False`. Điều này ngăn không cho User bị tự động thay đổi liên kết Odoo khi chỉ sửa field nhỏ (ví dụ sửa chính tả tên). Chỉ khi Admin hoặc User chủ động yêu cầu re-sync (truyền `allow_auto_link=True`), hệ thống mới tìm lại Employee ID.
+- **Ví dụ**: User A đổi email công ty. Nếu `allow_auto_link=True`, hệ thống sẽ tìm lại Employee ID ứng với email mới này.
 
 ---
 
