@@ -114,6 +114,7 @@ Các hàm tiện ích được Service gọi đến:
   ```
 
 - **`create_access_token`**: Tạo chuỗi JWT với thời gian hết hạn (`exp`) và secret key.
+
   ```python
   def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
       to_encode = data.copy()
@@ -126,6 +127,7 @@ Các hàm tiện ích được Service gọi đến:
       encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
       return encoded_jwt
   ```
+
   - **Payload**: Chứa `sub` (user id), `role`, `odoo_employee_id`.
   - **Signature**: Ký bằng `SECRET_KEY` + `ALGORITHM` (HS256).
 
@@ -147,3 +149,55 @@ Cuối cùng, API trả về JSON cho Mobile App:
 ```
 
 Mobile App sẽ lưu `access_token` này và đính kèm vào header của các request sau (`Authorization: Bearer <token>`) để chứng minh danh tính.
+
+---
+
+### 6. Luồng Đăng Xuất (Logout Flow)
+
+Hệ thống sử dụng cơ chế **Blacklist** để vô hiệu hóa Token.
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant API
+    participant Service
+    participant DB as DB (TokenBlacklist)
+
+    Client->>API: POST /auth/logout (Header: Bearer Token)
+    API->>Service: auth_service.logout(db, token)
+    Service->>DB: Check if exists in Blacklist?
+    alt Not Blacklisted
+        Service->>DB: INSERT INTO token_blacklist (token)
+        DB-->>Service: Commit Success
+    end
+    Service-->>API: Success
+    API-->>Client: "Logged out successfully"
+```
+
+- **Logic**: Khi Logout, server không xóa Token (do JWT stateless) mà lưu nó vào bảng đen (`token_blacklist`).
+- **Hệ quả**: Ở các request sau, `deps.get_current_user` sẽ kiểm tra bảng này. Nếu Token dính blacklist -> Trả về lỗi `401 Unauthorized`.
+
+---
+
+### 7. Luồng Làm mới Token (Refresh Token Flow)
+
+Hệ thống sử dụng chiến lược **Token Rotation** (Dùng token cũ để đổi token mới).
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant API
+    participant Service
+    participant Security
+
+    Note over Client: Token sắp hết hạn (ví dụ còn 5 phút)
+    Client->>API: POST /auth/refresh (Header: Bearer OldToken)
+    API->>Service: auth_service.refresh_token(current_user)
+    Service->>Security: create_access_token(user_data)
+    Security-->>Service: New JWT Strings
+    Service-->>API: TokenResponse (New Token, Reset 60m)
+    API-->>Client: { "access_token": "NewToken...", ... }
+```
+
+- **Điều kiện**: Client phải gửi request này **TRƯỚC** khi Token cũ hết hạn hoàn toàn.
+- **Tác dụng**: Cấp lại `access_token` mới với thời hạn (expiry) được reset lại từ đầu (mặc định 60 phút), giúp user duy trì phiên làm việc liên tục mà không cần đăng nhập lại password.
