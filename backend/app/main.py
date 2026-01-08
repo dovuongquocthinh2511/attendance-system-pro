@@ -8,6 +8,7 @@ from app.core.database import engine, SessionLocal, Base
 from app.api.endpoints import auth, users, attendance, leave, profile
 from app.core import security
 from app.models.user import User
+from app.models.password_reset import PasswordResetToken
 from app.core.exceptions import BestmixException
 from app.core.logger import logger
 from app.core.config import settings

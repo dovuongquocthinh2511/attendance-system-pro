@@ -201,3 +201,45 @@ sequenceDiagram
 
 - **Điều kiện**: Client phải gửi request này **TRƯỚC** khi Token cũ hết hạn hoàn toàn.
 - **Tác dụng**: Cấp lại `access_token` mới với thời hạn (expiry) được reset lại từ đầu (mặc định 60 phút), giúp user duy trì phiên làm việc liên tục mà không cần đăng nhập lại password.
+
+---
+
+### 8. Luồng Quên Mật Khẩu (Forgot Password Flow)
+
+Hệ thống sử dụng **OTP qua Email** để xác thực quyền reset mật khẩu.
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant API
+    participant Service
+    participant DB as DB (PasswordResetToken)
+    participant Email as EmailService (SMTP)
+
+    Note over Client: Bước 1: Yêu cầu OTP
+    Client->>API: POST /auth/forgot-password {email}
+    API->>Service: forgot_password(email)
+    Service->>DB: Check User exists?
+    Service->>DB: Save OTP (6 digits)
+    Service->>Email: send_otp(email, OTP)
+    Email-->>Client: (Email sent to User)
+    Service-->>API: Success Msg
+
+    Note over Client: Bước 2: Đổi Mật Khẩu
+    Client->>API: POST /auth/reset-password {email, otp, new_pass}
+    API->>Service: reset_password(email, otp, new_pass)
+    Service->>DB: Verify OTP (match & not expired)
+    alt Invalid/Expired OTP
+        Service-->>API: Error 400
+    else Valid OTP
+        Service->>DB: Update User.password_hash
+        Service->>DB: Mark OTP as used
+        Service-->>API: Success Msg
+    end
+```
+
+- **Bảo mật**:
+  - API `/forgot-password` luôn trả về thành công (200 OK) đù email có tồn tại hay không, để tránh việc hacker dò quét email (User Enumeration Attack).
+  - OTP chỉ có hiệu lực trong **10 phút** và chỉ được dùng **1 lần**.
+
+---

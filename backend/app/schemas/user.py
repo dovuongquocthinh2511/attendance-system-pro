@@ -41,3 +41,11 @@ class UserDetailResponse(BaseModel):
 class LoginRequest(BaseModel):
     username: str
     password: str
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+class ResetPasswordRequest(BaseModel):
+    email: EmailStr
+    otp: str
+    new_password: str

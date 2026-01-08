@@ -7,8 +7,68 @@ from app.models.user import User
 from app.models.token_blacklist import TokenBlacklist
 from app.schemas.token import TokenResponse
 from app.core import security
+from app.models.password_reset import PasswordResetToken
+from app.services.email_service import email_service
+import secrets
+from datetime import datetime, timedelta
 
 class AuthService:
+    def forgot_password(self, db: Session, email: str):
+        # 1. Check if user exists
+        from app.core.logger import logger
+        logger.info(f"--- FGO Password Request for: {email} ---")
+        
+        user = db.query(User).filter(User.email == email).first()
+        if not user:
+            logger.warning(f"--- User NOT FOUND in DB: {email} ---")
+            # Security: Don't reveal if user exists. Just return Success.
+            return 
+        
+        logger.info(f"--- User FOUND: {user.email} (ID: {user.id}) ---") 
+        
+        # 2. Generate OTP
+        otp = secrets.token_hex(3).upper() # 6 chars
+        expires = datetime.now() + timedelta(minutes=10)
+        
+        # 3. Save to DB
+        reset_token = PasswordResetToken(
+            email=email,
+            otp=otp,
+            expires_at=expires,
+            is_used=False
+        )
+        db.add(reset_token)
+        db.commit()
+        
+        # 4. Send Email
+        email_service.send_otp(email, otp)
+
+    def reset_password(self, db: Session, email: str, otp: str, new_password: str):
+        # 1. Find valid OTP
+        token = db.query(PasswordResetToken).filter(
+            PasswordResetToken.email == email,
+            PasswordResetToken.otp == otp,
+            PasswordResetToken.is_used == False,
+            PasswordResetToken.expires_at > datetime.now()
+        ).first()
+        
+        if not token:
+            raise HTTPException(status_code=400, detail="Invalid or expired OTP")
+            
+        # 2. Find User
+        user = db.query(User).filter(User.email == email).first()
+        if not user:
+             raise HTTPException(status_code=404, detail="User not found")
+
+        # 3. Update Password
+        user.password_hash = security.hash_password(new_password)
+        
+        # 4. Invalidate Token
+        token.is_used = True
+        
+        db.commit()
+
+
     def authenticate(self, db: Session, username: str, password: str) -> Optional[User]:
         """
         Authenticate user by email or phone and password.

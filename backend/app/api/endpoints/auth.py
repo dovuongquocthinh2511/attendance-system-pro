@@ -4,7 +4,7 @@ from fastapi.security import OAuth2PasswordBearer
 
 from app.api import deps
 from app.models.user import User
-from app.schemas.user import LoginRequest
+from app.schemas.user import LoginRequest, ForgotPasswordRequest, ResetPasswordRequest
 from app.schemas.token import TokenResponse
 from app.services.auth_service import auth_service
 from app.schemas.response import APIResponse
@@ -33,3 +33,19 @@ def refresh_token(
 ):
     token = auth_service.refresh_token(current_user=current_user)
     return APIResponse(data=token)
+
+@router.post("/forgot-password", response_model=APIResponse[ActionResponse])
+def forgot_password(
+    request: ForgotPasswordRequest, 
+    db: Session = Depends(deps.get_db)
+):
+    auth_service.forgot_password(db=db, email=request.email)
+    return APIResponse(data=ActionResponse(msg="If email exists, an OTP has been sent"))
+
+@router.post("/reset-password", response_model=APIResponse[ActionResponse])
+def reset_password(
+    request: ResetPasswordRequest, 
+    db: Session = Depends(deps.get_db)
+):
+    auth_service.reset_password(db=db, email=request.email, otp=request.otp, new_password=request.new_password)
+    return APIResponse(data=ActionResponse(msg="Password reset successfully"))
