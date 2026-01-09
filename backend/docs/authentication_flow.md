@@ -204,7 +204,7 @@ sequenceDiagram
 
 ---
 
-### 8. Luồng Quên Mật Khẩu (Forgot Password Flow)
+### 8. Chi tiết Luồng Quên Mật Khẩu (Forgot Password)
 
 Hệ thống sử dụng **OTP qua Email** để xác thực quyền reset mật khẩu.
 
@@ -238,8 +238,82 @@ sequenceDiagram
     end
 ```
 
+Tính năng này được chia làm 2 giai đoạn: **Gửi OTP** và **Đặt lại Password**. Dưới đây là giải thích chi tiết logic trong Code (`auth_service.py`).
+
+#### A. Hàm `forgot_password(email)` - Gửi mã xác thực
+
+```python
+def forgot_password(self, db: Session, email: str):
+    # 1. Kiểm tra User có tồn tại không
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        # SECURITY NOTE: Nếu không tìm thấy user, ta vẫn return "thành công"
+        # Mục đích: Chống hacker dò quét email (User Enumeration Attack)
+        return
+
+    # 2. Sinh mã OTP (6 ký tự, viết hoa)
+    otp = secrets.token_hex(3).upper()
+
+    # 3. Tính thời gian hết hạn (10 phút từ lúc tạo)
+    expires = datetime.now() + timedelta(minutes=10)
+
+    # 4. Lưu OTP vào Database (Bảng password_reset_tokens)
+    reset_token = PasswordResetToken(
+        email=email,
+        otp=otp,
+        expires_at=expires,
+        is_used=False  # Mới tạo thì chưa dùng
+    )
+    db.add(reset_token)
+    db.commit()
+
+    # 5. Gửi Email thật cho User
+    email_service.send_otp(email, otp)
+```
+
+- **Logic quan trọng**:
+  - Luôn trả về kết quả giống nhau (thành công) ở lớp API dù tìm thấy user hay không.
+  - OTP được sinh ngẫu nhiên và lưu vào DB để đối chiếu sau này.
+
+#### B. Hàm `reset_password(email, otp, new_password)` - Đổi mật khẩu
+
+```python
+def reset_password(self, db: Session, email: str, otp: str, new_password: str):
+    # 1. Tìm bản ghi OTP hợp lệ trong DB
+    token = db.query(PasswordResetToken).filter(
+        PasswordResetToken.email == email,
+        PasswordResetToken.otp == otp,
+        PasswordResetToken.is_used == False,        # Phải chưa được dùng
+        PasswordResetToken.expires_at > datetime.now() # Phải còn hạn
+    ).first()
+
+    if not token:
+        # Nếu không thấy -> OTP sai hoặc hết hạn hoặc đã dùng rồi
+        raise HTTPException(status_code=400, detail="Invalid or expired OTP")
+
+    # 2. Tìm User gốc để đổi pass
+    user = db.query(User).filter(User.email == email).first()
+
+    # 3. Cập nhật mật khẩu mới (Mã hóa Hash)
+    user.password_hash = security.hash_password(new_password)
+
+    # 4. Vô hiệu hóa OTP ngay lập tức (Chống dùng lại)
+    token.is_used = True
+
+    db.commit()
+```
+
+- **Kiểm tra chặt chẽ**:
+
+  - `is_used == False`: Đảm bảo 1 mã OTP chỉ đổi được pass 1 lần duy nhất.
+  - `expires_at > datetime.now()`: Đảm bảo mã dùng trong vòng 10 phút. Nếu quá hạn sẽ coi như mã sai.
+
 - **Bảo mật**:
   - API `/forgot-password` luôn trả về thành công (200 OK) đù email có tồn tại hay không, để tránh việc hacker dò quét email (User Enumeration Attack).
   - OTP chỉ có hiệu lực trong **10 phút** và chỉ được dùng **1 lần**.
 
 ---
+
+```
+
+```
