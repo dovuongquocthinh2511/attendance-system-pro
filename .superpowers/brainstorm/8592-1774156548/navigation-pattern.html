@@ -1,0 +1,184 @@
+<h2>Navigation Pattern cho Mobile PWA</h2>
+<p class="subtitle">Chọn kiểu điều hướng phù hợp cho Employee & Manager hàng ngày</p>
+
+<div class="cards">
+  <!-- Option A: Bottom Tab Bar -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#1a1a2e;border-radius:12px;overflow:hidden;height:360px;display:flex;flex-direction:column;font-family:system-ui;color:white;position:relative;">
+        <!-- Status bar -->
+        <div style="padding:8px 16px;font-size:11px;display:flex;justify-content:space-between;background:#16213e;">
+          <span>9:41</span>
+          <span>Bestmix Pro</span>
+          <span>100%</span>
+        </div>
+        <!-- Main content -->
+        <div style="flex:1;padding:20px;display:flex;flex-direction:column;gap:12px;">
+          <div style="font-size:18px;font-weight:bold;">Xin chao, Thinh</div>
+          <div style="background:#0f3460;border-radius:12px;padding:16px;text-align:center;">
+            <div style="font-size:13px;opacity:0.7;">Trang thai</div>
+            <div style="font-size:22px;margin:8px 0;">Chua check-in</div>
+            <div style="background:#e94560;padding:12px;border-radius:8px;font-weight:bold;cursor:pointer;">CHECK IN</div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <div style="flex:1;background:#0f3460;border-radius:8px;padding:12px;text-align:center;">
+              <div style="font-size:11px;opacity:0.7">Thang nay</div>
+              <div style="font-size:16px;font-weight:bold">160h</div>
+            </div>
+            <div style="flex:1;background:#0f3460;border-radius:8px;padding:12px;text-align:center;">
+              <div style="font-size:11px;opacity:0.7">Phep con</div>
+              <div style="font-size:16px;font-weight:bold">12 ngay</div>
+            </div>
+          </div>
+        </div>
+        <!-- Bottom Tab Bar -->
+        <div style="display:flex;justify-content:space-around;padding:10px 0;background:#16213e;border-top:1px solid #0f3460;">
+          <div style="text-align:center;color:#e94560;">
+            <div style="font-size:20px;">🏠</div>
+            <div style="font-size:10px;">Home</div>
+          </div>
+          <div style="text-align:center;opacity:0.5;">
+            <div style="font-size:20px;">📅</div>
+            <div style="font-size:10px;">Phep</div>
+          </div>
+          <div style="text-align:center;opacity:0.5;">
+            <div style="font-size:20px;">📋</div>
+            <div style="font-size:10px;">Lich su</div>
+          </div>
+          <div style="text-align:center;opacity:0.5;">
+            <div style="font-size:20px;">👤</div>
+            <div style="font-size:10px;">Ca nhan</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A. Bottom Tab Bar</h3>
+      <p>Thanh tab co dinh o duoi man hinh. Chuyen trang nhanh bang 1 tap. Pho bien nhat cho mobile app (Instagram, Grab...)</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Quen thuoc voi user</li><li>Chuyen tab nhanh 1 cham</li><li>Luon thay cac muc chinh</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Gioi han 4-5 tab</li><li>Manager can nhieu muc hon</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option B: Bottom Tab + Floating Action -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#1a1a2e;border-radius:12px;overflow:hidden;height:360px;display:flex;flex-direction:column;font-family:system-ui;color:white;position:relative;">
+        <!-- Status bar -->
+        <div style="padding:8px 16px;font-size:11px;display:flex;justify-content:space-between;background:#16213e;">
+          <span>9:41</span>
+          <span>Bestmix Pro</span>
+          <span>100%</span>
+        </div>
+        <!-- Main content -->
+        <div style="flex:1;padding:20px;display:flex;flex-direction:column;gap:12px;">
+          <div style="font-size:18px;font-weight:bold;">Xin chao, Thinh</div>
+          <div style="display:flex;gap:8px;">
+            <div style="flex:1;background:#0f3460;border-radius:8px;padding:12px;text-align:center;">
+              <div style="font-size:11px;opacity:0.7">Hom nay</div>
+              <div style="font-size:14px;font-weight:bold">Chua check-in</div>
+            </div>
+            <div style="flex:1;background:#0f3460;border-radius:8px;padding:12px;text-align:center;">
+              <div style="font-size:11px;opacity:0.7">Thang nay</div>
+              <div style="font-size:14px;font-weight:bold">160h</div>
+            </div>
+          </div>
+          <div style="background:#0f3460;border-radius:8px;padding:12px;">
+            <div style="font-size:13px;opacity:0.7;margin-bottom:4px;">Phep cho duyet</div>
+            <div style="font-size:14px;">2 don dang cho</div>
+          </div>
+          <div style="background:#0f3460;border-radius:8px;padding:12px;">
+            <div style="font-size:13px;opacity:0.7;margin-bottom:4px;">Lich su gan day</div>
+            <div style="font-size:13px;">21/03 - 8:00 → 17:30 (9.5h)</div>
+            <div style="font-size:13px;opacity:0.5;">20/03 - 7:45 → 17:15 (9.5h)</div>
+          </div>
+        </div>
+        <!-- FAB -->
+        <div style="position:absolute;bottom:70px;left:50%;transform:translateX(-50%);width:56px;height:56px;background:#e94560;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 4px 12px rgba(233,69,96,0.4);">
+          ✓
+        </div>
+        <!-- Bottom Tab Bar -->
+        <div style="display:flex;justify-content:space-around;padding:10px 0;background:#16213e;border-top:1px solid #0f3460;">
+          <div style="text-align:center;color:#e94560;">
+            <div style="font-size:20px;">🏠</div>
+            <div style="font-size:10px;">Home</div>
+          </div>
+          <div style="text-align:center;opacity:0.5;">
+            <div style="font-size:20px;">📅</div>
+            <div style="font-size:10px;">Phep</div>
+          </div>
+          <div style="width:56px;"></div>
+          <div style="text-align:center;opacity:0.5;">
+            <div style="font-size:20px;">📋</div>
+            <div style="font-size:10px;">Lich su</div>
+          </div>
+          <div style="text-align:center;opacity:0.5;">
+            <div style="font-size:20px;">👤</div>
+            <div style="font-size:10px;">Ca nhan</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B. Bottom Tab + FAB (Check-in)</h3>
+      <p>Bottom tab cho navigation + Floating Action Button noi bat o giua cho Check-in/Check-out. Hanh dong chinh luon noi bat.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Check-in noi bat, de thao tac</li><li>Van co tab navigation</li><li>UX tot cho hanh dong hang ngay</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>FAB chiem khong gian</li><li>Phuc tap hon option A</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option C: Hamburger + Dashboard -->
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#1a1a2e;border-radius:12px;overflow:hidden;height:360px;display:flex;flex-direction:column;font-family:system-ui;color:white;position:relative;">
+        <!-- Top bar with hamburger -->
+        <div style="padding:12px 16px;display:flex;justify-content:space-between;align-items:center;background:#16213e;">
+          <div style="font-size:22px;cursor:pointer;">☰</div>
+          <span style="font-size:15px;font-weight:bold;">Bestmix Pro</span>
+          <div style="width:24px;height:24px;background:#e94560;border-radius:50%;font-size:12px;display:flex;align-items:center;justify-content:center;">T</div>
+        </div>
+        <!-- Dashboard grid -->
+        <div style="flex:1;padding:16px;display:flex;flex-direction:column;gap:12px;">
+          <!-- Check-in card -->
+          <div style="background:#0f3460;border-radius:12px;padding:16px;text-align:center;">
+            <div style="font-size:13px;opacity:0.7;">Trang thai hom nay</div>
+            <div style="font-size:20px;margin:8px 0;">Chua check-in</div>
+            <div style="background:#e94560;padding:12px;border-radius:8px;font-weight:bold;">CHECK IN</div>
+          </div>
+          <!-- Grid items -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <div style="background:#0f3460;border-radius:8px;padding:14px;text-align:center;">
+              <div style="font-size:22px;">📅</div>
+              <div style="font-size:12px;margin-top:4px;">Xin phep</div>
+            </div>
+            <div style="background:#0f3460;border-radius:8px;padding:14px;text-align:center;">
+              <div style="font-size:22px;">📋</div>
+              <div style="font-size:12px;margin-top:4px;">Lich su</div>
+            </div>
+            <div style="background:#0f3460;border-radius:8px;padding:14px;text-align:center;">
+              <div style="font-size:22px;">👤</div>
+              <div style="font-size:12px;margin-top:4px;">Ho so</div>
+            </div>
+            <div style="background:#0f3460;border-radius:8px;padding:14px;text-align:center;position:relative;">
+              <div style="font-size:22px;">✅</div>
+              <div style="font-size:12px;margin-top:4px;">Duyet phep</div>
+              <div style="position:absolute;top:6px;right:6px;background:#e94560;border-radius:50%;width:18px;height:18px;font-size:10px;display:flex;align-items:center;justify-content:center;">2</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C. Hamburger Menu + Dashboard Grid</h3>
+      <p>Menu hamburger (slide-out) + Dashboard dang luoi. Linh hoat, hien thi duoc nhieu muc hon. Phu hop khi Manager co nhieu chuc nang.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Khong gioi han so luong menu</li><li>Dashboard tong quan</li><li>Manager thay ngay "Duyet phep"</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Hamburger can 2 tap de chuyen trang</li><li>Menu bi an, user co the quen</li></ul></div>
+      </div>
+    </div>
+  </div>
+</div>
