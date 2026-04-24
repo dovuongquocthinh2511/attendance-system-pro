@@ -22,4 +22,7 @@ database.db
 # Ignore hypothesis
 .hypothesis/
 
-/backend/.env
+# Environment files - tracked via git-crypt (see .gitattributes)
+# Block any accidental .env files NOT covered by git-crypt
+*.env.local
+.env.*.local
