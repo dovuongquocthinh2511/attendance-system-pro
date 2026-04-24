@@ -22,4 +22,4 @@ database.db
 # Ignore hypothesis
 .hypothesis/
 
-
+/backend/.env

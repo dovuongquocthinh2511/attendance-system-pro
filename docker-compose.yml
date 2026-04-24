@@ -7,7 +7,7 @@ services:
     restart: always
     environment:
       - POSTGRES_USER=bestmix_user
-      - POSTGRES_PASSWORD=bestmix_pass
+      - POSTGRES_PASSWORD=12345
       - POSTGRES_DB=bestmix_auth_db
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -24,7 +24,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://bestmix_user:bestmix_pass@db/bestmix_auth_db
+      - DATABASE_URL=postgresql://bestmix_user:12345@db/bestmix_auth_db
       - SECRET_KEY=chuoi_bi_mat_sieu_dai
       - ACCESS_TOKEN_EXPIRE_MINUTES=60
       - PYTHONUNBUFFERED=1
