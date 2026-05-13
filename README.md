@@ -31,18 +31,15 @@ A modern, mobile-first HR management system built on a 3-tier architecture. Empl
 ```
 ┌─────────────────────────────┐
 │   React PWA (Mobile-first)  │  ← Frontend (Vite + antd-mobile)
-│   http://localhost:5173     │
 └────────────┬────────────────┘
              │ REST / JWT
 ┌────────────▼────────────────┐
 │   FastAPI Backend           │  ← Business logic + local auth
-│   http://localhost:8000     │
 │   PostgreSQL (local auth)   │
 └────────────┬────────────────┘
              │ XML-RPC
 ┌────────────▼────────────────┐
 │   Odoo 18 ERP               │  ← HR data source of truth
-│   http://localhost:8069     │
 └─────────────────────────────┘
 ```
 
