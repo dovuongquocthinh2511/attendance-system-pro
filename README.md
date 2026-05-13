@@ -1,185 +1,252 @@
 # Attendance System Pro
 
-Attendance System Pro là hệ thống quản lý nhân sự nội bộ với kiến trúc 3-tier với mục đích giúp cho nhân viên thực hiện việc chấm công, xin nghỉ phép, quản lý hồ sơ nhân viên
-
-## 📖 Giới thiệu
-
-**Attendance System Pro** là hệ thống quản lý nhân sự nội bộ (HRM) được thiết kế hiện đại với kiến trúc 3-tier, giúp tối ưu hóa quy trình chấm công, nghỉ phép và quản lý hồ sơ nhân viên.
-
-Dự án đóng vai trò là cầu nối thông minh gữa người dùng và hệ thống Odoo ERP, giúp nhân viên thao tác nhanh chóng trên giao diện Mobile-first PWA mà không cần truy cập trực tiếp vào Odoo.
-
-### 🚀 Tính năng chính
-
-- **Chấm công online (Attendance)**: Check-in/Check-out dễ dàng, tự động đồng bộ với Odoo.
-- **Quản lý nghỉ phép (Leave)**: Tạo đơn, duyệt đơn và theo dõi phép tồn theo thời gian thực.
-- **Hồ sơ nhân viên (Profile)**: Xem và cập nhật thông tin cá nhân, hợp đồng lao động.
-- **Tiết kiệm License**: Backend hoạt động như một Proxy Server, giảm thiểu số lượng user Odoo cần thiết.
-
-### 🛠 Công nghệ sử dụng
-
-- **Frontend**: ReactJS, Vite PWA (Mobile-first).
-- **Backend**: FastAPI (Python), PostgreSQL (Lưu trữ user/auth local).
-- **Data Layer**: Odoo 18.0 (Hệ thống Core HR).
+A modern, mobile-first HR management system built on a 3-tier architecture. Employees can clock in/out, request leave, and manage their profiles — all through a lightweight PWA that integrates seamlessly with Odoo 18 ERP as the data backbone.
 
 ---
 
-## ⚙️ Hướng dẫn Cài đặt & Khởi chạy
+## Overview
 
-Có thể chạy dự án bằng **Docker** hoặc thiết lập môi trường thủ công.
+**Attendance System Pro** acts as an intelligent proxy layer between end users and Odoo ERP. Rather than granting every employee a full Odoo license, this system exposes a clean, role-based interface for the most common HR operations while keeping Odoo as the single source of truth.
 
-### Cách 1: Chạy bằng Docker
+### Key Features
 
-Phương pháp này giúp đóng gói toàn bộ môi trường backend và database, tránh xung đột thư viện.
+- **Attendance** — Check-in / Check-out with GPS location, live timer, history log, and monthly summary.
+- **Leave Management** — Submit leave requests, track remaining balance, and view approval history. Managers get a dedicated approval panel.
+- **Employee Profile** — View and update personal information. Read-only contract details sourced directly from Odoo.
+- **Admin Panel** — Full user CRUD with search, role management, and account activation.
+- **License Efficiency** — The FastAPI backend authenticates locally and communicates with Odoo via XML-RPC using a single service account, reducing the number of required Odoo user licenses.
 
-**Yêu cầu**: Cài đặt [Docker Desktop](https://www.docker.com/products/docker-desktop).
+### User Roles
 
-**Bước 1: Cấu hình môi trường**
-Tại thư mục `backend` (thư mục hiện tại), tạo file `.env`. Có thể copy từ `.env` mẫu nếu có, hoặc sử dụng cấu hình cơ bản sau:
+| Role | Access |
+|---|---|
+| Employee | Attendance, Leave, Profile |
+| Manager | All employee features + Leave approval + Team view |
+| Admin | All features + User management |
+
+---
+
+## Architecture
+
+```
+┌─────────────────────────────┐
+│   React PWA (Mobile-first)  │  ← Frontend (Vite + antd-mobile)
+│   http://localhost:5173     │
+└────────────┬────────────────┘
+             │ REST / JWT
+┌────────────▼────────────────┐
+│   FastAPI Backend           │  ← Business logic + local auth
+│   http://localhost:8000     │
+│   PostgreSQL (local auth)   │
+└────────────┬────────────────┘
+             │ XML-RPC
+┌────────────▼────────────────┐
+│   Odoo 18 ERP               │  ← HR data source of truth
+│   http://localhost:8069     │
+└─────────────────────────────┘
+```
+
+---
+
+## Tech Stack
+
+### Frontend
+| Technology | Purpose |
+|---|---|
+| React 19 + TypeScript | UI framework |
+| Vite 8 + vite-plugin-pwa | Build tool + PWA support |
+| antd-mobile | Mobile-first UI components |
+| TanStack React Query | Server state management |
+| React Router v7 | Client-side routing |
+| Axios | HTTP client with JWT interceptor |
+| dayjs | Date handling |
+
+### Backend
+| Technology | Purpose |
+|---|---|
+| FastAPI | REST API framework |
+| SQLAlchemy + PostgreSQL | Local user auth storage |
+| python-jose | JWT token generation & validation |
+| passlib / bcrypt | Password hashing |
+| requests | Odoo XML-RPC communication |
+
+### Infrastructure
+| Technology | Purpose |
+|---|---|
+| Docker + Docker Compose | Container orchestration |
+| Odoo 18 | Core HR data layer |
+
+---
+
+## Getting Started
+
+### Option 1: Docker (Recommended)
+
+Packages the backend and database together — no manual dependency setup required.
+
+**Prerequisites:** [Docker Desktop](https://www.docker.com/products/docker-desktop)
+
+**Step 1 — Configure environment**
+
+Create a `.env` file inside the `backend/` directory:
 
 ```env
-# backend/.env
 DATABASE_URL=postgresql://bestmix_user:bestmix_pass@db/bestmix_auth_db
 SECRET_KEY=your_secret_key_here
 ACCESS_TOKEN_EXPIRE_MINUTES=60
 ODOO_URL=http://host.docker.internal:8069
-ODOO_DB=your_odoo_db
-ODOO_USER=your_odoo_admin_user
+ODOO_DB=your_odoo_db_name
+ODOO_USER=your_odoo_admin_email
 ODOO_PASSWORD=your_odoo_admin_password
+FIRST_SUPERUSER_EMAIL=admin@example.com
+FIRST_SUPERUSER_PASSWORD=changeme
 ```
 
-> **Lưu ý**: `ODOO_URL` được set là `host.docker.internal` để Docker container có thể giao tiếp với Odoo chạy trên máy host (localhost).
+> `host.docker.internal` allows the Docker container to reach Odoo running on the host machine. On Linux, you may need to add `--add-host=host.docker.internal:host-gateway` or use the host IP directly.
 
-**Bước 2: Khởi chạy**
-Quay trở lại thư mục gốc của dự án (`cd ..`), chạy lệnh:
+**Step 2 — Start services**
+
+From the project root:
 
 ```bash
 docker-compose up -d --build
 ```
 
-Lệnh này sẽ:
+This will:
+1. Start a PostgreSQL 15 container (local auth DB).
+2. Build and run the FastAPI backend.
 
-1.  Khởi tạo PostgreSQL database.
-2.  Build và chạy Backend FastAPI.
+**Step 3 — Access**
 
-**Bước 3: Truy cập**
-
-- Backend API: `http://localhost:8000`
-- API Docs: `http://localhost:8000/docs`
+| Service | URL |
+|---|---|
+| Backend API | http://localhost:8000 |
+| Interactive API Docs | http://localhost:8000/docs |
 
 ---
 
-### Cách 2: Chạy Thủ công
+### Option 2: Manual Setup
 
-Nếu muốn debug hoặc phát triển, hãy cài đặt môi trường ảo (Virtual Environment).
+Useful for development or debugging.
 
-#### 1. Khởi chạy Backend
+#### Backend
 
-**Yêu cầu**: Python 3.10+
-**Vị trí**: Thực hiện tại thư mục `backend`.
-
-**Bước 1: Tạo môi trường ảo (venv)**
+**Prerequisites:** Python 3.10+
 
 ```bash
+# 1. Navigate to backend directory
+cd backend
+
+# 2a. Create and activate virtualenv (venv)
 python -m venv venv
-```
+source venv/bin/activate          # macOS / Linux
+# .\venv\Scripts\activate         # Windows PowerShell
 
-**Bước 2: Kích hoạt môi trường**
+# 2b. Or use Conda
+# conda create --name attendance-env python=3.10
+# conda activate attendance-env
 
-- **Windows**:
-  ```powershell
-  .\venv\Scripts\activate
-  ```
-- **macOS/Linux**:
-  ```bash
-  source venv/bin/activate
-  ```
-
-**Bước 3: Cài đặt thư viện**
-
-```bash
+# 3. Install dependencies
 pip install -r requirements.txt
-```
 
-**Bước 4: Cấu hình môi trường**
-Tạo file `.env` tại thư mục này (tương tự như phần Docker), nhưng thay đổi `DATABASE_URL` và `ODOO_URL` nếu cần:
+# 4. Configure environment
+# Create backend/.env (see Docker section above for variables)
+# Set DATABASE_URL to your local PostgreSQL instance:
+# DATABASE_URL=postgresql://user:password@localhost/dbname
+# Set ODOO_URL=http://localhost:8069
 
-```env
-DATABASE_URL=postgresql://user:password@localhost/dbname
-ODOO_URL=http://localhost:8069
-```
-
-_Lưu ý: Bạn cần tự cài đặt và chạy PostgreSQL nếu chạy thủ công._
-
-**Bước 5: Chạy Server**
-
-```bash
+# 5. Run the server
 uvicorn app.main:app --reload
 ```
 
-#### 2. Khởi chạy Backend bằng Conda (Tùy chọn)
+> You need a running PostgreSQL instance. The application creates tables and seeds the initial admin account automatically on first startup.
 
-Nếu bạn sử dụng Anaconda hoặc Miniconda:
+#### Frontend
 
-**Bước 1: Tạo môi trường**
-
-```bash
-conda create --name bestmix-env python=3.10
-```
-
-**Bước 2: Kích hoạt môi trường**
+**Prerequisites:** Node.js 18+
 
 ```bash
-conda activate bestmix-env
-```
-
-**Bước 3: Cài đặt thư viện**
-
-```bash
-pip install -r requirements.txt
-```
-
-_Lưu ý: Nên dùng `pip` trong môi trường conda để đảm bảo tương thích tốt nhất với `requirements.txt` hiện có._
-
-**Bước 4: Cấu hình và Chạy**
-Thực hiện tương tự như **Bước 4** và **Bước 5** của phần hướng dẫn venv ở trên.
-
-#### 2. Khởi chạy Frontend
-
-Để chạy Frontend, vui lòng tham khảo hướng dẫn trong thư mục `../frontend` hoặc:
-
-**Yêu cầu**: Node.js 16+
-
-**Bước 1: Di chuyển sang thư mục Frontend**
-
-```bash
-cd ../frontend
-```
-
-**Bước 2: Cài đặt thư viện**
-
-```bash
+cd frontend
 npm install
-```
-
-**Bước 3: Chạy Development Server**
-
-```bash
 npm run dev
 ```
 
-Truy cập Frontend tại: `http://localhost:5173` (hoặc port hiển thị trên terminal).
+Access the frontend at `http://localhost:5173`.
 
 ---
 
-## 📂 Cấu trúc Dự án
+## Project Structure
 
 ```
-bestmix-pro/
-├── backend/            # FastAPI Project
-│   ├── app/            # Source code (API, Services, Models)
-│   ├── Dockerfile      # Cấu hình build Docker cho backend
+attendance-system-pro/
+├── backend/
+│   ├── app/
+│   │   ├── api/
+│   │   │   └── endpoints/      # Route handlers (auth, users, attendance, leave, profile)
+│   │   ├── core/               # Config, database, security, logging
+│   │   ├── models/             # SQLAlchemy ORM models
+│   │   ├── schemas/            # Pydantic request/response schemas
+│   │   └── services/           # Business logic + Odoo XML-RPC calls
+│   ├── tests/
+│   ├── Dockerfile
 │   └── requirements.txt
-├── frontend/           # ReactJS Project
-├── docker-compose.yml  # Cấu hình Docker cho toàn bộ hệ thống
-└── .kiro/              # Tài liệu thiết kế & Specs
+├── frontend/
+│   ├── src/
+│   │   ├── api/                # Axios client + endpoint functions
+│   │   ├── components/         # Shared UI components
+│   │   ├── contexts/           # Auth + App React contexts
+│   │   ├── hooks/              # Custom React hooks
+│   │   ├── pages/              # Route-level page components
+│   │   │   ├── attendance/
+│   │   │   ├── leave/
+│   │   │   ├── profile/
+│   │   │   └── admin/
+│   │   └── types/              # TypeScript type definitions
+│   ├── public/
+│   └── vite.config.ts
+├── docker-compose.yml
+├── docs/
+└── openspec/
 ```
+
+---
+
+## API Reference
+
+Full interactive documentation is available at `http://localhost:8000/docs` (Swagger UI) once the backend is running.
+
+### Endpoint Summary
+
+| Module | Method | Endpoint | Description |
+|---|---|---|---|
+| Auth | POST | `/auth/login` | Obtain JWT access token |
+| Auth | POST | `/auth/logout` | Invalidate session |
+| Auth | POST | `/auth/refresh` | Refresh access token |
+| Auth | POST | `/auth/forgot-password` | Send password reset email |
+| Auth | POST | `/auth/reset-password` | Reset password via token |
+| Attendance | GET | `/attendance/status` | Current check-in status |
+| Attendance | POST | `/attendance/check-in` | Clock in |
+| Attendance | POST | `/attendance/check-out` | Clock out |
+| Attendance | GET | `/attendance/history` | Attendance log |
+| Attendance | GET | `/attendance/summary` | Monthly summary |
+| Leave | GET | `/leave/balance` | Remaining leave balance |
+| Leave | GET | `/leave/types` | Available leave types |
+| Leave | POST | `/leave/request` | Submit a leave request |
+| Leave | GET | `/leave/history` | Leave request history |
+| Leave | GET | `/leave/pending` | Pending approvals (manager) |
+| Leave | POST | `/leave/{id}/approve` | Approve a leave request |
+| Leave | POST | `/leave/{id}/reject` | Reject a leave request |
+| Profile | GET | `/profile/` | Get employee profile |
+| Profile | PUT | `/profile/` | Update profile |
+| Profile | GET | `/profile/contract` | View contract details |
+| Users | GET | `/users/` | List all users (admin) |
+| Users | POST | `/users/` | Create user (admin) |
+| Users | PUT | `/users/{id}` | Update user (admin) |
+| Users | DELETE | `/users/{id}` | Delete user (admin) |
+| Users | GET | `/users/team` | View team members (manager) |
+
+---
+
+## License
+
+[MIT](LICENSE)
