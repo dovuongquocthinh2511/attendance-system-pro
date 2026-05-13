@@ -60,7 +60,9 @@ class OdooClient:
         except xmlrpc.client.Fault as e:
             raise OdooAPIError(f"Odoo Fault: {e.faultString} (Code: {e.faultCode})")
         except Exception as e:
-             raise OdooAPIError(f"Odoo Execution Error: {str(e)}")
+            # Reset uid so next call triggers reconnect (handles session expiry/Odoo restart)
+            self.uid = None
+            raise OdooAPIError(f"Odoo Execution Error: {str(e)}")
 
     def search_read(self, model: str, domain: List[Any], fields: List[str], limit: int = None, order: str = None) -> List[dict]:
         """Helper for search_read method."""
